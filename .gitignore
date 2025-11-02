@@ -1,0 +1,35 @@
+# Node & Next.js
+node_modules/
+.next/
+
+# Environment
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+!.env.example
+
+# Hardhat
+artifacts/
+cache/
+typechain-types/
+
+# Prisma
+prisma/migrations/
+
+# OS / tooling
+.DS_Store
+
+# Build outputs
+dist/
+coverage/
+
+# Temporary tarballs
+*.tgz
+
+# Generated scratch workspaces
+tmp/
+
+# Docker local volumes
+.docker/postgres/data/

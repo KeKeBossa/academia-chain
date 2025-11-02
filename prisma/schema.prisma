@@ -1,0 +1,305 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String              @id @default(cuid())
+  walletAddress      String              @unique
+  did                String              @unique
+  displayName        String?
+  email              String?
+  role               MembershipRole      @default(STUDENT)
+  profile            Json?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  credentials        Credential[]
+  memberships        DaoMembership[]
+  proposals          Proposal[]          @relation("ProposalProposer")
+  votes              Vote[]
+  assets             ResearchAsset[]     @relation("AssetOwner")
+  reviews            Review[]            @relation("ReviewReviewer")
+  activities         ActivityLog[]       @relation("ActivityActor")
+  collaborationPosts CollaborationPost[] @relation("UserCollaborationPosts")
+  notifications      Notification[]
+  sessions           DidSession[]
+  authChallenges     DidAuthChallenge[]
+}
+
+model Credential {
+  id        String           @id @default(cuid())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  type      String
+  issuer    String?
+  hash      String
+  status    CredentialStatus @default(PENDING)
+  issuedAt  DateTime?
+  revokedAt DateTime?
+  metadata  Json?
+  createdAt DateTime         @default(now())
+
+  @@unique([userId, type])
+  @@index([userId, status])
+}
+
+model Dao {
+  id                 String              @id @default(cuid())
+  name               String
+  description        String?
+  metadataCid        String?
+  governanceConfig   Json?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  memberships        DaoMembership[]
+  proposals          Proposal[]
+  assets             ResearchAsset[]
+  collaborationPosts CollaborationPost[]
+  activities         ActivityLog[]       @relation("DaoActivity")
+}
+
+model DaoMembership {
+  id             String         @id @default(cuid())
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  dao            Dao            @relation(fields: [daoId], references: [id], onDelete: Cascade)
+  daoId          String
+  role           MembershipRole @default(STUDENT)
+  weightOverride Int?
+  grantedBy      String?
+  joinedAt       DateTime       @default(now())
+
+  @@unique([userId, daoId])
+  @@index([daoId, role])
+}
+
+model Proposal {
+  id                String          @id @default(cuid())
+  dao               Dao             @relation(fields: [daoId], references: [id], onDelete: Cascade)
+  daoId             String
+  onchainId         BigInt?
+  proposer          User?           @relation("ProposalProposer", fields: [proposerId], references: [id])
+  proposerId        String?
+  title             String
+  description       String?
+  ipfsCid           String?
+  status            ProposalStatus  @default(DRAFT)
+  votingWindowStart DateTime?
+  votingWindowEnd   DateTime?
+  snapshotBlock     BigInt?
+  executionData     Json?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  votes             Vote[]
+  assets            ResearchAsset[]
+  logs              ActivityLog[]   @relation("ProposalActivity")
+
+  @@index([daoId, status])
+}
+
+model Vote {
+  id         String     @id @default(cuid())
+  proposal   Proposal   @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  proposalId String
+  voter      User       @relation(fields: [voterId], references: [id], onDelete: Cascade)
+  voterId    String
+  weight     Int
+  choice     VoteChoice
+  txHash     String?
+  createdAt  DateTime   @default(now())
+
+  @@unique([proposalId, voterId])
+  @@index([voterId])
+}
+
+model ResearchAsset {
+  id           String          @id @default(cuid())
+  dao          Dao             @relation(fields: [daoId], references: [id], onDelete: Cascade)
+  daoId        String
+  owner        User            @relation("AssetOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId      String
+  proposal     Proposal?       @relation(fields: [proposalId], references: [id])
+  proposalId   String?
+  title        String
+  abstract     String?
+  ipfsCid      String
+  artifactHash String?
+  tags         String[]        @default([])
+  visibility   AssetVisibility @default(INTERNAL)
+  metadata     Json?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  reviews      Review[]
+  comments     ActivityLog[]   @relation("AssetComments")
+
+  @@index([daoId, visibility])
+  @@index([proposalId])
+}
+
+model Review {
+  id         String        @id @default(cuid())
+  asset      ResearchAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  assetId    String
+  reviewer   User          @relation("ReviewReviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewerId String
+  comment    String
+  status     ReviewStatus  @default(PENDING)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@index([assetId, status])
+}
+
+model CollaborationPost {
+  id             String              @id @default(cuid())
+  dao            Dao                 @relation(fields: [daoId], references: [id], onDelete: Cascade)
+  daoId          String
+  author         User                @relation("UserCollaborationPosts", fields: [authorId], references: [id], onDelete: Cascade)
+  authorId       String
+  title          String
+  body           String
+  requiredSkills String[]            @default([])
+  status         CollaborationStatus @default(OPEN)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+}
+
+model ActivityLog {
+  id         String         @id @default(cuid())
+  dao        Dao?           @relation("DaoActivity", fields: [daoId], references: [id], onDelete: Cascade)
+  daoId      String?
+  actor      User?          @relation("ActivityActor", fields: [actorId], references: [id])
+  actorId    String?
+  proposal   Proposal?      @relation("ProposalActivity", fields: [proposalId], references: [id], onDelete: Cascade)
+  proposalId String?
+  asset      ResearchAsset? @relation("AssetComments", fields: [assetId], references: [id], onDelete: Cascade)
+  assetId    String?
+  type       ActivityType
+  targetId   String?
+  metadata   Json?
+  createdAt  DateTime       @default(now())
+
+  @@index([daoId, type])
+  @@index([actorId])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  type      String
+  payload   Json?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt])
+}
+
+model EventSyncState {
+  id                 String   @id @default(cuid())
+  source             String   @unique
+  lastProcessedBlock BigInt   @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model DidSession {
+  id          String            @id @default(cuid())
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  nonce       String            @unique
+  expiresAt   DateTime
+  issuedAt    DateTime          @default(now())
+  token       String            @unique
+  verifiedAt  DateTime?
+  revokedAt   DateTime?
+  lastUsedAt  DateTime?
+  ipAddress   String?
+  userAgent   String?
+  challenge   DidAuthChallenge? @relation(fields: [challengeId], references: [id], onDelete: SetNull)
+  challengeId String?
+}
+
+model DidAuthChallenge {
+  id            String       @id @default(cuid())
+  user          User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String?
+  walletAddress String
+  did           String
+  nonce         String       @unique
+  message       String
+  statement     String?
+  resources     String[]     @default([])
+  issuedAt      DateTime     @default(now())
+  expiresAt     DateTime
+  verifiedAt    DateTime?
+  sessions      DidSession[]
+
+  @@index([walletAddress])
+  @@index([did])
+  @@index([expiresAt])
+}
+
+enum MembershipRole {
+  STUDENT
+  ADVISOR
+  ADMIN
+  OPERATOR
+}
+
+enum CredentialStatus {
+  PENDING
+  VERIFIED
+  REVOKED
+}
+
+enum ProposalStatus {
+  DRAFT
+  ACTIVE
+  SUCCEEDED
+  DEFEATED
+  EXECUTED
+  CANCELED
+}
+
+enum VoteChoice {
+  FOR
+  AGAINST
+  ABSTAIN
+}
+
+enum AssetVisibility {
+  PUBLIC
+  INTERNAL
+  LINK
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  CHANGES_REQUESTED
+}
+
+enum CollaborationStatus {
+  OPEN
+  FILLED
+  CLOSED
+  ARCHIVED
+}
+
+enum ActivityType {
+  PROPOSAL_CREATED
+  PROPOSAL_UPDATED
+  PROPOSAL_EXECUTED
+  RESEARCH_ASSET_REGISTERED
+  REVIEW_SUBMITTED
+  COLLABORATION_POSTED
+  MEMBER_JOINED
+  MEMBER_APPROVED
+  NOTIFICATION_SENT
+  ASSET_COMMENTED
+}

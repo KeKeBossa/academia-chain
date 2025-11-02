@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "outDir": "dist-hardhat",
+    "noEmit": false
+  },
+  "include": ["hardhat.config.ts", "ignition/**/*.ts", "scripts", "test", "typechain", "types"]
+}

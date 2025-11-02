@@ -1,0 +1,11 @@
+#!/bin/sh
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+PROJECT_DIR="$REPO_ROOT/academic-repository"
+
+cd "$PROJECT_DIR"
+
+echo "Running lint-staged..."
+npm run lint:staged
