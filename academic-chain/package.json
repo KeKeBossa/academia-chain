@@ -1,6 +1,6 @@
 
   {
-      "name": "Academic DAO Platform UI",
+      "name": "academic-dao-platform-ui",
       "version": "0.1.0",
       "private": true,
       "dependencies": {
