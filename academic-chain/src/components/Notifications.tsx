@@ -5,26 +5,11 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
+import { type Notification } from '../hooks/useData';
 
-type NotificationType = 'proposal' | 'project' | 'paper' | 'seminar' | 'comment' | 'achievement' | 'system';
-
-interface Notification {
-  id: string;
-  type: NotificationType;
-  title: string;
-  message: string;
-  timestamp: string;
-  read: boolean;
-  actionUrl?: string;
-  actionLabel?: string;
-  metadata?: {
-    proposalId?: string;
-    projectName?: string;
-    paperTitle?: string;
-    userName?: string;
-  };
-}
+// 型定義
+type NotificationType = Notification['type'];
 
 interface NotificationsProps {
   notifications: Notification[];
@@ -112,7 +97,7 @@ export function Notifications({
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
-            <Tabs value={filter} onValueChange={(v) => setFilter(v as 'all' | 'unread')} className="w-auto">
+            <Tabs value={filter} onValueChange={(v: string) => setFilter(v as 'all' | 'unread')} className="w-auto">
               <TabsList>
                 <TabsTrigger value="all">
                   すべて ({notifications.length})

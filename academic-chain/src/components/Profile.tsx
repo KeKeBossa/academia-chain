@@ -6,11 +6,13 @@ import { Avatar, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Progress } from './ui/progress';
+import { Skeleton } from './ui/skeleton';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
+import { usePapers } from '../hooks/useData';
 
 export function Profile() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -34,26 +36,14 @@ export function Profile() {
   const [editForm, setEditForm] = useState(userProfile);
   const [newResearchField, setNewResearchField] = useState('');
 
-  const recentPapers = [
-    {
-      title: '量子コンピューティングにおける誤り訂正の新手法',
-      date: '2025-10-15',
-      citations: 8,
-      downloads: 156,
-    },
-    {
-      title: '深層学習を用いた量子状態の推定',
-      date: '2025-09-20',
-      citations: 5,
-      downloads: 98,
-    },
-    {
-      title: '量子機械学習の実用化に向けた研究',
-      date: '2025-08-10',
-      citations: 12,
-      downloads: 234,
-    },
-  ];
+  // 実データから論文を取得
+  const { papers: fetchedPapers, loading: loadingPapers } = usePapers();
+  const recentPapers = fetchedPapers.slice(0, 3).map(p => ({
+    title: p.title,
+    date: p.date,
+    citations: p.citations,
+    downloads: p.downloads,
+  }));
 
   const achievements = [
     { title: '初論文公開', icon: FileText, date: '2024-05-10', color: 'blue' },

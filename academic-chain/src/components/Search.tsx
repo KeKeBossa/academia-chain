@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import { Separator } from './ui/separator';
+import { Skeleton } from './ui/skeleton';
+import { usePapers, useSeminars, useProjects } from '../hooks/useData';
 
 interface SearchProps {
   initialQuery?: string;
@@ -23,135 +25,64 @@ export function Search({ initialQuery = '', onQueryChange }: SearchProps) {
   const [selectedUniversities, setSelectedUniversities] = useState<string[]>([]);
   const [dateRange, setDateRange] = useState('all');
 
+  // 実データを取得
+  const { papers: fetchedPapers, loading: loadingPapers } = usePapers(searchQuery);
+  const { seminars: fetchedSeminars, loading: loadingSeminars } = useSeminars();
+  const { projects: fetchedProjects, loading: loadingProjects } = useProjects();
+
   // Sync searchQuery with initialQuery prop
   useEffect(() => {
     setSearchQuery(initialQuery);
   }, [initialQuery]);
 
-  // Mock search results data
-  const papers = [
-    {
-      id: '1',
-      type: 'paper',
-      title: '深層学習を用いた医療画像診断の高精度化',
-      author: '山田 花子',
-      university: '東京大学',
-      department: '情報理工学系研究科',
-      date: '2025-10-20',
-      abstract: '本研究では、深層学習技術を応用した医療画像診断システムの精度向上手法を提案する。',
-      tags: ['深層学習', '医療AI', 'CNN'],
-      category: 'コンピュータサイエンス',
-      downloads: 156,
-      likes: 42,
-      comments: 12,
-      verified: true,
-    },
-    {
-      id: '2',
-      type: 'paper',
-      title: 'ブロックチェーンベースの学術論文査読システムの設計',
-      author: '鈴木 美咲',
-      university: '慶應義塾大学',
-      department: '理工学部',
-      date: '2025-10-15',
-      abstract: 'スマートコントラクトを活用した透明性の高い査読プロセスを提案。',
-      tags: ['ブロックチェーン', 'ピアレビュー', 'DID'],
-      category: '情報システム',
-      downloads: 98,
-      likes: 38,
-      comments: 9,
-      verified: true,
-    },
-  ];
+  // データを型変換
+  const papers = fetchedPapers.map(p => ({
+    id: p.id,
+    type: 'paper' as const,
+    title: p.title,
+    author: p.author,
+    university: p.university,
+    department: p.department || '',
+    date: p.date,
+    abstract: p.abstract,
+    tags: p.tags,
+    category: p.category,
+    downloads: p.downloads,
+    likes: p.likes,
+    comments: p.comments,
+    verified: p.verified,
+  }));
 
-  const seminars = [
-    {
-      id: '1',
-      type: 'seminar',
-      name: '量子コンピューティング研究会',
-      university: '東京大学',
-      professor: '山田 太郎 教授',
-      members: 24,
-      field: '量子情報科学',
-      description: '量子コンピューティングの理論から実装まで、幅広いテーマを研究しています。',
-      tags: ['量子計算', '量子アルゴリズム', '量子誤り訂正'],
-      activeProjects: 5,
-      publications: 18,
-      openForCollaboration: true,
-    },
-    {
-      id: '2',
-      type: 'seminar',
-      name: 'ブロックチェーン社会実装研究室',
-      university: '慶應義塾大学',
-      professor: '高橋 美咲 教授',
-      members: 28,
-      field: '情報システム',
-      description: 'ブロックチェーン技術の社会実装に焦点を当て、金融、医療、教育などの分野での応用研究を進めています。',
-      tags: ['ブロックチェーン', 'DeFi', 'スマートコントラクト'],
-      activeProjects: 6,
-      publications: 15,
-      openForCollaboration: true,
-    },
-  ];
+  const seminars = fetchedSeminars.map(s => ({
+    id: s.id,
+    type: 'seminar' as const,
+    name: s.name,
+    university: s.university,
+    professor: s.professor,
+    members: s.members,
+    field: s.field,
+    description: s.description,
+    tags: s.tags,
+    activeProjects: 0,
+    publications: 0,
+    openForCollaboration: s.openForCollaboration,
+  }));
 
-  const projects = [
-    {
-      id: '1',
-      type: 'project',
-      title: 'AIを活用した気候変動予測モデルの開発',
-      description: '機械学習技術を用いて、より正確な気候変動予測モデルを構築する共同研究プロジェクト',
-      status: 'active',
-      progress: 65,
-      universities: ['東京大学', '京都大学', '早稲田大学'],
-      members: 12,
-      leader: '佐藤 花子',
-      tags: ['AI', '気候科学', '機械学習'],
-      funding: '科研費',
-    },
-    {
-      id: '2',
-      type: 'project',
-      title: 'ブロックチェーン基盤の学術出版プラットフォーム',
-      description: '分散型技術を活用した透明性の高い査読・出版システムの設計',
-      status: 'planning',
-      progress: 15,
-      universities: ['慶應義塾大学', '東京大学'],
-      members: 6,
-      leader: '鈴木 美咲',
-      tags: ['ブロックチェーン', '学術出版', 'DID'],
-      funding: '大学助成金',
-    },
-  ];
+  const projects = fetchedProjects.map(p => ({
+    id: p.id,
+    type: 'project' as const,
+    title: p.title,
+    description: p.description,
+    status: p.status,
+    progress: p.progress,
+    universities: p.universities,
+    members: p.members,
+    leader: p.leader,
+    tags: p.tags,
+    funding: p.funding,
+  }));
 
-  const proposals = [
-    {
-      id: '1',
-      type: 'proposal',
-      title: '新しい研究分野カテゴリの追加提案',
-      description: '量子機械学習（Quantum Machine Learning）を新しい研究分野カテゴリとして追加することを提案します。',
-      proposer: '山田 花子',
-      proposerUniversity: '東京大学',
-      status: 'active',
-      votesFor: 247,
-      votesAgainst: 38,
-      category: 'プラットフォーム改善',
-      endDate: '2025-10-25',
-    },
-    {
-      id: '2',
-      type: 'proposal',
-      title: 'オープンアクセス論文への報奨制度導入',
-      description: 'オープンアクセスで論文を公開した研究者に対して、DAOトークンによる報奨を与える制度を導入することを提案します。',
-      proposer: '高橋 正',
-      proposerUniversity: '大阪大学',
-      status: 'passed',
-      votesFor: 412,
-      votesAgainst: 67,
-      category: 'インセンティブ',
-      endDate: '2025-10-20',
-    },
-  ];
+  const proposals: any[] = [];
 
   // Filter function for search query matching
   const matchesSearchQuery = (item: any): boolean => {
@@ -252,9 +183,10 @@ export function Search({ initialQuery = '', onQueryChange }: SearchProps) {
     setDateRange('all');
   };
 
-  const statusConfig = {
+  const statusConfig: Record<string, { label: string; color: string }> = {
     active: { label: '進行中', color: 'bg-green-50 text-green-700 border-green-200' },
     planning: { label: '計画中', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+    completed: { label: '完了', color: 'bg-gray-50 text-gray-700 border-gray-200' },
     passed: { label: '可決', color: 'bg-green-50 text-green-700 border-green-200' },
   };
 
