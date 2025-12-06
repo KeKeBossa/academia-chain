@@ -14,6 +14,15 @@ import { Checkbox } from './ui/checkbox';
 import { Skeleton } from './ui/skeleton';
 import { toast } from 'sonner';
 import { useSeminars } from '../hooks/useData';
+import {
+  SEMINAR_FORM_DEFAULTS,
+  validateSeminarForm,
+  generateDIDAddress,
+  generateBlockchainHash,
+  parseTags,
+  getResearchFields,
+} from '../utils/forms';
+import { calculateSeminarStats } from '../utils/stats';
 
 interface Seminar {
   id: string;
@@ -65,94 +74,13 @@ export function Seminars() {
     }));
   });
 
-  const researchFields = [
-    '量子情報科学',
-    '情報学',
-    'コンピュータサイエンス',
-    'エネルギー工学',
-    '情報システム',
-    '生命科学',
-    '都市工学',
-    'バイオテクノロジー',
-    '材料科学',
-    '医療・ヘルスケア',
-    '環境科学',
-    '数学',
-    '物理学',
-    '化学',
-    '機械工学',
-    '電気電子工学',
-    '経済学',
-    '社会学',
-    'その他',
-  ];
-
-  const generateDIDAddress = () => {
-    return 'did:ethr:0x' + Array.from({ length: 40 }, () => 
-      Math.floor(Math.random() * 16).toString(16)
-    ).join('');
-  };
-
-  const generateBlockchainHash = () => {
-    return '0x' + Array.from({ length: 64 }, () => 
-      Math.floor(Math.random() * 16).toString(16)
-    ).join('');
-  };
+  const researchFields = getResearchFields();
 
   const handleRegisterSeminar = () => {
-    // Validation
-    if (!newSeminar.name.trim()) {
-      toast.error('研究室名を入力してください');
-      return;
-    }
-    if (newSeminar.name.length < 5) {
-      toast.error('研究室名は5文字以上で入力してください');
-      return;
-    }
-    if (!newSeminar.university.trim()) {
-      toast.error('大学名を入力してください');
-      return;
-    }
-    if (!newSeminar.department.trim()) {
-      toast.error('学部・研究科を入力してください');
-      return;
-    }
-    if (!newSeminar.professor.trim()) {
-      toast.error('指導教員名を入力してください');
-      return;
-    }
-    if (!newSeminar.field) {
-      toast.error('研究分野を選択してください');
-      return;
-    }
-    if (!newSeminar.description.trim()) {
-      toast.error('研究室紹介文を入力してください');
-      return;
-    }
-    if (newSeminar.description.length < 50) {
-      toast.error('研究室紹介文は50文字以上で入力してください');
-      return;
-    }
-
-    const members = parseInt(newSeminar.members);
-    if (isNaN(members) || members < 1 || members > 200) {
-      toast.error('メンバー数は1〜200の範囲で入力してください');
-      return;
-    }
-
-    if (!newSeminar.tags.trim()) {
-      toast.error('研究キーワードを入力してください（カンマ区切りで1つ以上）');
-      return;
-    }
-
-    // Optional field validation
-    if (newSeminar.website && !newSeminar.website.match(/^https?:\/\/.+/)) {
-      toast.error('ウェブサイトURLは http:// または https:// で始まる必要があります');
-      return;
-    }
-
-    if (newSeminar.email && !newSeminar.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-      toast.error('有効なメールアドレスを入力してください');
+    // Validate form
+    const validation = validateSeminarForm(newSeminar);
+    if (!validation.isValid) {
+      toast.error(validation.error);
       return;
     }
 
@@ -161,12 +89,10 @@ export function Seminars() {
     const txHash = generateBlockchainHash();
 
     // Parse tags
-    const tagsList = newSeminar.tags
-      .split(',')
-      .map(t => t.trim())
-      .filter(t => t.length > 0);
+    const tagsList = parseTags(newSeminar.tags);
 
     // Create new seminar
+    const members = parseInt(newSeminar.members);
     const seminar: Seminar = {
       id: String(seminars.length + 1),
       name: newSeminar.name.trim(),

@@ -12,6 +12,7 @@ import { Label } from './ui/label';
 import { Separator } from './ui/separator';
 import { Skeleton } from './ui/skeleton';
 import { usePapers, useSeminars, useProjects } from '../hooks/useData';
+import { transformForSearch } from '../utils/transformers';
 
 interface SearchProps {
   initialQuery?: string;
@@ -35,52 +36,12 @@ export function Search({ initialQuery = '', onQueryChange }: SearchProps) {
     setSearchQuery(initialQuery);
   }, [initialQuery]);
 
-  // データを型変換
-  const papers = fetchedPapers.map(p => ({
-    id: p.id,
-    type: 'paper' as const,
-    title: p.title,
-    author: p.author,
-    university: p.university,
-    department: p.department || '',
-    date: p.date,
-    abstract: p.abstract,
-    tags: p.tags,
-    category: p.category,
-    downloads: p.downloads,
-    likes: p.likes,
-    comments: p.comments,
-    verified: p.verified,
-  }));
-
-  const seminars = fetchedSeminars.map(s => ({
-    id: s.id,
-    type: 'seminar' as const,
-    name: s.name,
-    university: s.university,
-    professor: s.professor,
-    members: s.members,
-    field: s.field,
-    description: s.description,
-    tags: s.tags,
-    activeProjects: 0,
-    publications: 0,
-    openForCollaboration: s.openForCollaboration,
-  }));
-
-  const projects = fetchedProjects.map(p => ({
-    id: p.id,
-    type: 'project' as const,
-    title: p.title,
-    description: p.description,
-    status: p.status,
-    progress: p.progress,
-    universities: p.universities,
-    members: p.members,
-    leader: p.leader,
-    tags: p.tags,
-    funding: p.funding,
-  }));
+  // Transform data using unified transformers
+  const { papers, seminars, projects } = transformForSearch({
+    papers: fetchedPapers,
+    seminars: fetchedSeminars,
+    projects: fetchedProjects,
+  });
 
   const proposals: any[] = [];
 

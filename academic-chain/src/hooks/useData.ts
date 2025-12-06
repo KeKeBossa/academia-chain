@@ -4,6 +4,8 @@
  */
 
 import { useEffect, useState, useMemo } from 'react';
+import { apiFetch } from '../utils/api';
+import { API_ENDPOINTS } from '../config/api';
 
 // ============================================
 // Types (aligned with Prisma schema)
@@ -81,93 +83,46 @@ export interface Seminar {
 }
 
 // ============================================
-// API Base URL
-// ============================================
-
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3000';
-
-// ============================================
-// Fetch Functions
+// Fetch Functions (Simplified)
 // ============================================
 
 export async function fetchResearchPapers(
   query?: string,
   filters?: { category?: string; university?: string; dateRange?: string }
 ): Promise<ResearchPaper[]> {
-  try {
-    const params = new URLSearchParams();
-    if (query) params.append('q', query);
-    if (filters?.category) params.append('category', filters.category);
-    if (filters?.university) params.append('university', filters.university);
-    if (filters?.dateRange) params.append('dateRange', filters.dateRange);
-
-    const response = await fetch(`${API_BASE}/api/assets?${params}`);
-    if (!response.ok) throw new Error('Failed to fetch papers');
-
-    const data = await response.json();
-    return data.assets || [];
-  } catch (error) {
-    console.error('Error fetching papers:', error);
-    return [];
-  }
+  const data = await apiFetch<{ assets: ResearchPaper[] }>(API_ENDPOINTS.PAPERS, {
+    params: {
+      ...(query && { q: query }),
+      ...(filters?.category && { category: filters.category }),
+      ...(filters?.university && { university: filters.university }),
+      ...(filters?.dateRange && { dateRange: filters.dateRange }),
+    },
+  });
+  return data?.assets || [];
 }
 
 export async function fetchNotifications(userId: string, unreadOnly = false): Promise<Notification[]> {
-  try {
-    const params = new URLSearchParams({ userId });
-    if (unreadOnly) params.append('unreadOnly', 'true');
-
-    const response = await fetch(`${API_BASE}/api/notifications?${params}`);
-    if (!response.ok) throw new Error('Failed to fetch notifications');
-
-    const data = await response.json();
-    return data.notifications || [];
-  } catch (error) {
-    console.error('Error fetching notifications:', error);
-    return [];
-  }
+  const data = await apiFetch<{ notifications: Notification[] }>(API_ENDPOINTS.NOTIFICATIONS, {
+    params: { userId, ...(unreadOnly && { unreadOnly: 'true' }) },
+  });
+  return data?.notifications || [];
 }
 
 export async function fetchUpcomingEvents(): Promise<Event[]> {
-  try {
-    const response = await fetch(`${API_BASE}/api/events`);
-    if (!response.ok) throw new Error('Failed to fetch events');
-
-    const data = await response.json();
-    return data.events || [];
-  } catch (error) {
-    console.error('Error fetching events:', error);
-    return [];
-  }
+  const data = await apiFetch<{ events: Event[] }>(API_ENDPOINTS.EVENTS);
+  return data?.events || [];
 }
 
 export async function fetchProjects(daoId?: string): Promise<Project[]> {
-  try {
-    const params = new URLSearchParams();
-    if (daoId) params.append('daoId', daoId);
-
-    const response = await fetch(`${API_BASE}/api/collaboration?${params}`);
-    if (!response.ok) throw new Error('Failed to fetch projects');
-
-    const data = await response.json();
-    return data.collaborations || [];
-  } catch (error) {
-    console.error('Error fetching projects:', error);
-    return [];
-  }
+  const data = await apiFetch<{ collaborations: Project[] }>(API_ENDPOINTS.PROJECTS, {
+    params: { ...(daoId && { daoId }) },
+  });
+  return data?.collaborations || [];
 }
 
 export async function fetchSeminars(): Promise<Seminar[]> {
-  try {
-    const response = await fetch(`${API_BASE}/api/seminars`);
-    if (!response.ok) throw new Error('Failed to fetch seminars');
-
-    const data = await response.json();
-    return data.seminars || [];
-  } catch (error) {
-    console.error('Error fetching seminars:', error);
-    return [];
-  }
+  const data = await apiFetch<{ seminars: Seminar[] }>(API_ENDPOINTS.SEMINARS);
+  return data?.seminars || [];
 }
 
 // ============================================
