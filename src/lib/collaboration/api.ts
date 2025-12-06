@@ -1,4 +1,4 @@
-import { CollaborationStatus } from '@prisma/client';
+import type { CollaborationStatus } from '@prisma/client';
 
 export type CollaborationPostInput = {
   daoId: string;
