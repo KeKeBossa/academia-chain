@@ -243,25 +243,25 @@ export function Seminars() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl mb-1">127</div>
+            <div className="text-2xl mb-1">{seminars.length}</div>
             <p className="text-gray-600 text-sm">登録研究室</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl mb-1">1,248</div>
+            <div className="text-2xl mb-1">{seminars.reduce((acc, s) => acc + s.members, 0)}</div>
             <p className="text-gray-600 text-sm">総メンバー数</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl mb-1">45</div>
+            <div className="text-2xl mb-1">{new Set(seminars.map(s => s.university)).size}</div>
             <p className="text-gray-600 text-sm">大学</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl mb-1">89</div>
+            <div className="text-2xl mb-1">{seminars.reduce((acc, s) => acc + s.activeProjects, 0)}</div>
             <p className="text-gray-600 text-sm">共同研究進行中</p>
           </CardContent>
         </Card>
@@ -277,8 +277,17 @@ export function Seminars() {
         </TabsList>
 
         <TabsContent value="all" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {seminars.map((seminar) => (
+          {seminars.length === 0 ? (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 mb-2">登録されている研究室がありません</p>
+                <p className="text-gray-500 text-sm">研究室を登録して、共同研究の機会を広げましょう</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {seminars.map((seminar) => (
               <Card key={seminar.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex items-start justify-between mb-2">
@@ -349,8 +358,9 @@ export function Seminars() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="joined">
@@ -364,8 +374,17 @@ export function Seminars() {
         </TabsContent>
 
         <TabsContent value="open">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {seminars.filter(s => s.openForCollaboration).map((seminar) => (
+          {seminars.filter(s => s.openForCollaboration).length === 0 ? (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 mb-2">共同研究募集中の研究室がありません</p>
+                <p className="text-gray-500 text-sm">他の研究室を探すか、新しい研究室を登録してください</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {seminars.filter(s => s.openForCollaboration).map((seminar) => (
               <Card key={seminar.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex items-start justify-between mb-2">
@@ -396,8 +415,9 @@ export function Seminars() {
                   </Button>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="recommended">
