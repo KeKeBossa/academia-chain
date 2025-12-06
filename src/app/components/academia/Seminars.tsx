@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Users,
   MapPin,
@@ -14,7 +15,8 @@ import {
   Hash,
   Globe,
   Mail,
-  CheckCircle2
+  CheckCircle2,
+  Loader2
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -35,6 +37,7 @@ import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Checkbox } from '../ui/checkbox';
 import { toast } from 'sonner';
+import { fetchSeminars } from '@/lib/dashboard/api';
 
 interface Seminar {
   id: string;
@@ -55,6 +58,7 @@ interface Seminar {
 }
 
 export function Seminars() {
+  const queryClient = useQueryClient();
   const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState(false);
   const [newSeminar, setNewSeminar] = useState({
     name: '',
@@ -69,92 +73,15 @@ export function Seminars() {
     email: '',
     openForCollaboration: true
   });
-  const [seminars, setSeminars] = useState<Seminar[]>([
-    {
-      id: '1',
-      name: '量子コンピューティング研究会',
-      university: '東京大学',
-      professor: '山田 太郎 教授',
-      members: 24,
-      field: '量子情報科学',
-      description:
-        '量子コンピューティングの理論から実装まで、幅広いテーマを研究しています。IBM Qなどの実機を用いた実験も行っています。',
-      tags: ['量子計算', '量子アルゴリズム', '量子誤り訂正'],
-      activeProjects: 5,
-      publications: 18,
-      openForCollaboration: true
-    },
-    {
-      id: '2',
-      name: '機械学習とデータサイエンス',
-      university: '京都大学',
-      professor: '佐藤 花子 教授',
-      members: 32,
-      field: '情報学',
-      description:
-        '深層学習、強化学習を中心に、実社会の課題解決に向けたAI技術の研究開発を進めています。',
-      tags: ['深層学習', '強化学習', 'データ分析'],
-      activeProjects: 8,
-      publications: 25,
-      openForCollaboration: true
-    },
-    {
-      id: '3',
-      name: 'サステナブルエネルギー工学',
-      university: '早稲田大学',
-      professor: '鈴木 健 教授',
-      members: 18,
-      field: 'エネルギー工学',
-      description:
-        '再生可能エネルギーの効率化と蓄電技術の革新を目指し、実験とシミュレーションを組み合わせた研究を行っています。',
-      tags: ['太陽光発電', '蓄電池', '水素エネルギー'],
-      activeProjects: 4,
-      publications: 12,
-      openForCollaboration: false
-    },
-    {
-      id: '4',
-      name: 'ブロックチェーン社会実装研究室',
-      university: '慶應義塾大学',
-      professor: '高橋 美咲 教授',
-      members: 28,
-      field: '情報システム',
-      description:
-        'ブロックチェーン技術の社会実装に焦点を当て、金融、医療、教育などの分野での応用研究を進めています。',
-      tags: ['ブロックチェーン', 'DeFi', 'スマートコントラクト'],
-      activeProjects: 6,
-      publications: 15,
-      openForCollaboration: true
-    },
-    {
-      id: '5',
-      name: 'バイオインフォマティクス',
-      university: '大阪大学',
-      professor: '伊藤 正 教授',
-      members: 21,
-      field: '生命科学',
-      description:
-        'ゲノム解析、プロテオーム解析などの生命情報学を専門とし、計算科学的アプローチで生命現象を解明します。',
-      tags: ['ゲノム解析', 'タンパク質構造予測', '創薬'],
-      activeProjects: 7,
-      publications: 22,
-      openForCollaboration: true
-    },
-    {
-      id: '6',
-      name: 'スマートシティ・都市デザイン',
-      university: '東京工業大学',
-      professor: '渡辺 あゆみ 教授',
-      members: 16,
-      field: '都市工学',
-      description:
-        'IoT、AIを活用したスマートシティの設計と、持続可能な都市環境の実現を目指した研究を行っています。',
-      tags: ['スマートシティ', 'IoT', '都市計画'],
-      activeProjects: 3,
-      publications: 9,
-      openForCollaboration: true
-    }
-  ]);
+
+  // 実データをクエリで取得
+  const { data: seminarsData, isLoading: isLoadingSeminars } = useQuery({
+    queryKey: ['seminars'],
+    queryFn: fetchSeminars
+  });
+
+  const seminars = seminarsData?.seminars ?? [];
+  const hasData = seminars.length > 0;
 
   const researchFields = [
     '量子情報科学',
@@ -277,7 +204,9 @@ export function Seminars() {
       didAddress: didAddress
     };
 
-    setSeminars([seminar, ...seminars]);
+    // クエリキャッシュを更新
+    queryClient.invalidateQueries({ queryKey: ['seminars'] });
+
     setIsRegisterDialogOpen(false);
 
     // Reset form
@@ -369,16 +298,21 @@ export function Seminars() {
         </TabsList>
 
         <TabsContent value="all" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {seminars.map((seminar) => (
-              <Card key={seminar.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-start gap-3">
-                      <Avatar className="w-12 h-12">
-                        <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-600 text-white">
-                          {seminar.name.charAt(0)}
-                        </AvatarFallback>
+          {isLoadingSeminars ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
+            </div>
+          ) : seminars.length > 0 ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {seminars.map((seminar) => (
+                <Card key={seminar.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-start gap-3">
+                        <Avatar className="w-12 h-12">
+                          <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-600 text-white">
+                            {seminar.name.charAt(0)}
+                          </AvatarFallback>
                       </Avatar>
                       <div>
                         <CardTitle className="mb-1">{seminar.name}</CardTitle>
@@ -441,8 +375,17 @@ export function Seminars() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 mb-2">研究室データが利用できません</p>
+                <p className="text-gray-500 text-sm">後でもう一度お試しください</p>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="joined">

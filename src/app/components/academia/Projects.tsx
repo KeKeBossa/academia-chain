@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Users, Calendar, Clock, AlertCircle, MessageSquare, Hash, Link2 } from 'lucide-react';
+import { Plus, Users, Calendar, Clock, AlertCircle, MessageSquare, Hash, Link2, ArrowRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -56,6 +57,7 @@ type CollaborationPostRecord = {
 };
 
 export function Projects() {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [selectedDaoId, setSelectedDaoId] = useState('');
   const [selectedAuthorId, setSelectedAuthorId] = useState('');
@@ -277,16 +279,34 @@ export function Projects() {
           {filteredPosts.map((post) => {
             const meta = statusMeta[post.status];
             return (
-              <Card key={post.id}>
+              <Card key={post.id} className="hover:shadow-lg transition-shadow cursor-pointer">
                 <CardHeader className="space-y-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="secondary">{post.dao.name}</Badge>
-                    <Badge className={meta.tone}>{meta.label}</Badge>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="secondary">{post.dao.name}</Badge>
+                      <Badge className={meta.tone}>{meta.label}</Badge>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => router.push(`/projects/${post.id}`)}
+                      className="text-blue-600 hover:text-blue-700"
+                    >
+                      詳細を見る
+                      <ArrowRight className="w-4 h-4 ml-1" />
+                    </Button>
                   </div>
-                  <CardTitle>{post.title}</CardTitle>
-                  <CardDescription className="text-gray-700">
-                    {post.body.length > 240 ? `${post.body.slice(0, 240)}…` : post.body}
-                  </CardDescription>
+                  <div
+                    onClick={() => router.push(`/projects/${post.id}`)}
+                    className="space-y-2"
+                  >
+                    <CardTitle className="hover:text-blue-600 transition-colors">
+                      {post.title}
+                    </CardTitle>
+                    <CardDescription className="text-gray-700">
+                      {post.body.length > 240 ? `${post.body.slice(0, 240)}…` : post.body}
+                    </CardDescription>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex flex-wrap gap-3 text-sm text-gray-600">

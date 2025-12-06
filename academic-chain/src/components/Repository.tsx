@@ -10,7 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
+import { usePapers } from '../hooks/useData';
+import { Skeleton } from './ui/skeleton';
 
 interface Paper {
   id: string;
@@ -36,6 +38,7 @@ export function Repository() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const { papers: fetchedPapers, loading: loadingPapers } = usePapers(searchQuery);
   const [newPaper, setNewPaper] = useState({
     title: '',
     authors: '',
@@ -49,99 +52,20 @@ export function Repository() {
     fileName: '',
   });
 
-  const [papers, setPapers] = useState<Paper[]>([
-    {
-      id: '1',
-      title: '深層学習を用いた医療画像診断の高精度化',
-      author: '山田 花子',
-      university: '東京大学',
-      department: '情報理工学系研究科',
-      date: '2025-10-20',
-      abstract: '本研究では、深層学習技術を応用した医療画像診断システムの精度向上手法を提案する。CNNアーキテクチャの最適化により、既存手法と比較して15%の精度改善を実現した。',
-      tags: ['深層学習', '医療AI', 'CNN', '画像診断'],
-      category: 'コンピュータサイエンス',
-      txHash: '0xabcd...1234',
-      ipfsHash: 'QmX7Y8Z9...',
-      citations: 8,
-      downloads: 156,
-      likes: 42,
-      comments: 12,
-      verified: true,
-    },
-    {
-      id: '2',
-      title: '再生可能エネルギーの効率的な蓄電システムの開発',
-      author: '佐藤 健',
-      university: '京都大学',
-      department: 'エネルギー科学研究科',
-      date: '2025-10-18',
-      abstract: '太陽光・風力発電の変動性に対応する新型蓄電システムを開発。リチウムイオン電池の改良により、エネルギー密度を30%向上させることに成功した。',
-      tags: ['再生可能エネルギー', '蓄電技術', 'リチウムイオン電池'],
-      category: 'エネルギー工学',
-      txHash: '0xefgh...5678',
-      ipfsHash: 'QmA1B2C3...',
-      citations: 15,
-      downloads: 234,
-      likes: 67,
-      comments: 23,
-      verified: true,
-    },
-    {
-      id: '3',
-      title: 'ブロックチェーンベースの学術論文査読システムの設計',
-      author: '鈴木 美咲',
-      university: '慶應義塾大学',
-      department: '理工学部',
-      date: '2025-10-15',
-      abstract: 'スマートコントラクトを活用した透明性の高い査読プロセスを提案。分散型識別子（DID）により査読者の匿名性とトレーサビリティを両立させる。',
-      tags: ['ブロックチェーン', 'ピアレビュー', 'DID', 'スマートコントラクト'],
-      category: '情報システム',
-      txHash: '0xijkl...9012',
-      ipfsHash: 'QmD4E5F6...',
-      citations: 5,
-      downloads: 98,
-      likes: 38,
-      comments: 9,
-      verified: true,
-    },
-    {
-      id: '4',
-      title: '量子暗号通信の実用化に向けた研究',
-      author: '高橋 正',
-      university: '大阪大学',
-      department: '基礎工学研究科',
-      date: '2025-10-12',
-      abstract: '量子鍵配送（QKD）プロトコルの改良により、長距離での安全な通信を実現。実験により100km以上での安定した鍵配送に成功した。',
-      tags: ['量子暗号', 'QKD', 'セキュリティ'],
-      category: '量子情報科学',
-      txHash: '0xmnop...3456',
-      ipfsHash: 'QmG7H8I9...',
-      citations: 22,
-      downloads: 187,
-      likes: 54,
-      comments: 18,
-      verified: true,
-    },
-    {
-      id: '5',
-      title: '都市計画におけるAIシミュレーションの応用',
-      author: '伊藤 あゆみ',
-      university: '早稲田大学',
-      department: '創造理工学部',
-      date: '2025-10-10',
-      abstract: '機械学習とエージェントベースモデリングを組み合わせ、都市の交通流動や人口分布を予測。持続可能な都市設計に貢献する。',
-      tags: ['都市計画', 'AI', 'シミュレーション', 'サステナビリティ'],
-      category: '都市工学',
-      txHash: '0xqrst...7890',
-      ipfsHash: 'QmJ1K2L3...',
-      citations: 11,
-      downloads: 143,
-      likes: 29,
-      comments: 7,
-      verified: true,
-      accessType: 'open' as 'open' | 'restricted',
-    },
-  ]);
+  // フェッチされた論文を使用
+  const [papers, setPapers] = useState<Paper[]>(() => {
+    if (!fetchedPapers || fetchedPapers.length === 0) {
+      return [];
+    }
+    return fetchedPapers.map(p => ({
+      ...p,
+      department: p.department || '',
+      txHash: '',
+      ipfsHash: '',
+      citations: 0,
+      accessType: (p.accessType || 'open') as 'open' | 'restricted',
+    }));
+  });
 
   const categories = [
     'コンピュータサイエンス',
@@ -620,7 +544,7 @@ export function Repository() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="category">研究分野 *</Label>
-                <Select value={newPaper.category} onValueChange={(value) => setNewPaper({ ...newPaper, category: value })}>
+                <Select value={newPaper.category} onValueChange={(value: string) => setNewPaper({ ...newPaper, category: value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="研究分野を選択" />
                   </SelectTrigger>
@@ -636,7 +560,7 @@ export function Repository() {
 
               <div>
                 <Label htmlFor="access-type">公開設定 *</Label>
-                <Select value={newPaper.accessType} onValueChange={(value) => setNewPaper({ ...newPaper, accessType: value })}>
+                <Select value={newPaper.accessType} onValueChange={(value: string) => setNewPaper({ ...newPaper, accessType: value as 'open' | 'restricted' })}>
                   <SelectTrigger>
                     <SelectValue placeholder="公開設定を選択" />
                   </SelectTrigger>

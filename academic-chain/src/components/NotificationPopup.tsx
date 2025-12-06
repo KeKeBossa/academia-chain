@@ -2,17 +2,9 @@ import { Bell, Vote, FileText, Users, Briefcase, MessageSquare, Award, CheckCirc
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
+import { type Notification } from '../hooks/useData';
 
-type NotificationType = 'proposal' | 'project' | 'paper' | 'seminar' | 'comment' | 'achievement' | 'system';
-
-interface Notification {
-  id: string;
-  type: NotificationType;
-  title: string;
-  message: string;
-  timestamp: string;
-  read: boolean;
-}
+type NotificationType = Notification['type'];
 
 interface NotificationPopupProps {
   notifications: Notification[];

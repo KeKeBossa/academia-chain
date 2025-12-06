@@ -16,27 +16,9 @@ import { Badge } from './components/ui/badge';
 import { Input } from './components/ui/input';
 import { Toaster } from './components/ui/sonner';
 import { Popover, PopoverContent, PopoverTrigger } from './components/ui/popover';
+import { useNotifications, type Notification as NotificationData } from './hooks/useData';
 
 type TabType = 'dashboard' | 'repository' | 'seminars' | 'projects' | 'governance' | 'profile' | 'search' | 'settings' | 'notifications';
-
-type NotificationType = 'proposal' | 'project' | 'paper' | 'seminar' | 'comment' | 'achievement' | 'system';
-
-interface Notification {
-  id: string;
-  type: NotificationType;
-  title: string;
-  message: string;
-  timestamp: string;
-  read: boolean;
-  actionUrl?: string;
-  actionLabel?: string;
-  metadata?: {
-    proposalId?: string;
-    projectName?: string;
-    paperTitle?: string;
-    userName?: string;
-  };
-}
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
@@ -44,107 +26,13 @@ export default function App() {
   const [userDID, setUserDID] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [notificationPopupOpen, setNotificationPopupOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      type: 'proposal',
-      title: '新しいDAO提案が投稿されました',
-      message: '「研究費配分の最適化アルゴリズム」への投票が開始されました。投票期限は3日後です。',
-      timestamp: '5分前',
-      read: false,
-      actionLabel: '投票する',
-      metadata: {
-        proposalId: 'PROP-2024-003',
-      },
-    },
-    {
-      id: '2',
-      type: 'project',
-      title: 'プロジェクトへの招待',
-      message: '佐藤研究室があなたを「量子暗号通信の実用化研究」プロジェクトに招待しました。',
-      timestamp: '1時間前',
-      read: false,
-      actionLabel: '確認する',
-      metadata: {
-        projectName: '量子暗号通信の実用化研究',
-      },
-    },
-    {
-      id: '3',
-      type: 'paper',
-      title: 'あなたの論文が引用されました',
-      message: '山田花子氏の論文「分散台帳技術の教育応用」があなたの論文を引用しました。',
-      timestamp: '3時間前',
-      read: false,
-      actionLabel: '詳細を見る',
-      metadata: {
-        paperTitle: '分散台帳技術の教育応用',
-        userName: '山田花子',
-      },
-    },
-    {
-      id: '4',
-      type: 'comment',
-      title: '新しいコメントが投稿されました',
-      message: '鈴木一郎氏があなたの論文「ブロックチェーンガバナンスモデル」にコメントしました。',
-      timestamp: '5時間前',
-      read: true,
-      actionLabel: 'コメントを見る',
-      metadata: {
-        userName: '鈴木一郎',
-        paperTitle: 'ブロックチェーンガバナンスモデル',
-      },
-    },
-    {
-      id: '5',
-      type: 'proposal',
-      title: '投票が終了しました',
-      message: '「新規セミナー開催予算案」の投票が終了しました。賛成多数で可決されました。',
-      timestamp: '1日前',
-      read: true,
-      actionLabel: '結果を見る',
-      metadata: {
-        proposalId: 'PROP-2024-002',
-      },
-    },
-    {
-      id: '6',
-      type: 'seminar',
-      title: 'ゼミ活動の更新',
-      message: '佐藤研究室が新しい研究発表会を2024年11月15日に開催します。',
-      timestamp: '1日前',
-      read: true,
-      actionLabel: '詳細を見る',
-    },
-    {
-      id: '7',
-      type: 'achievement',
-      title: 'レピュテーションスコアが上昇しました',
-      message: 'あなたの論文が10回引用されました。レピュテーションスコアが+50ポイント上昇しました。',
-      timestamp: '2日前',
-      read: true,
-    },
-    {
-      id: '8',
-      type: 'project',
-      title: 'プロジェクトが完了しました',
-      message: '「AI倫理ガイドライン策定」プロジェクトが正常に完了しました。成果物がブロックチェーンに記録されました。',
-      timestamp: '3日前',
-      read: true,
-      actionLabel: '成果を見る',
-      metadata: {
-        projectName: 'AI倫理ガイドライン策定',
-      },
-    },
-    {
-      id: '9',
-      type: 'system',
-      title: 'システムメンテナンスのお知らせ',
-      message: '2024年11月1日 2:00-4:00にシステムメンテナンスを実施します。この間、一部機能が利用できません。',
-      timestamp: '5日前',
-      read: true,
-    },
-  ]);
+  
+  // 実データから通知を取得
+  const userId = userDID || 'demo-user';
+  const { notifications: fetchedNotifications, loading: loadingNotifications } = useNotifications(userId);
+  const [notifications, setNotifications] = useState<NotificationData[]>(
+    fetchedNotifications.length > 0 ? fetchedNotifications : []
+  );
 
   const unreadCount = notifications.filter(n => !n.read).length;
 

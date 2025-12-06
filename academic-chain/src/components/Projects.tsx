@@ -11,7 +11,9 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { toast } from 'sonner@2.0.3';
+import { Skeleton } from './ui/skeleton';
+import { toast } from 'sonner';
+import { useProjects } from '../hooks/useData';
 
 interface Project {
   id: string;
@@ -44,76 +46,12 @@ export function Projects() {
     expectedMembers: '5',
     tags: '',
   });
-  const [projects, setProjects] = useState<Project[]>([
-    {
-      id: '1',
-      title: 'AIを活用した気候変動予測モデルの開発',
-      description: '機械学習技術を用いて、より正確な気候変動予測モデルを構築する共同研究プロジェクト',
-      status: 'active',
-      progress: 65,
-      startDate: '2025-09-01',
-      endDate: '2026-03-31',
-      universities: ['東京大学', '京都大学', '早稲田大学'],
-      members: 12,
-      tasks: { total: 24, completed: 16 },
-      papers: 3,
-      meetings: 8,
-      tags: ['AI', '気候科学', '機械学習'],
-      leader: '佐藤 花子',
-      funding: '科研費',
-    },
-    {
-      id: '2',
-      title: '量子暗号通信の実用化研究',
-      description: '量子鍵配送プロトコルの改良と長距離通信への応用',
-      status: 'active',
-      progress: 42,
-      startDate: '2025-10-01',
-      endDate: '2026-09-30',
-      universities: ['大阪大学', '東京工業大学'],
-      members: 8,
-      tasks: { total: 18, completed: 8 },
-      papers: 1,
-      meetings: 4,
-      tags: ['量子暗号', 'QKD', 'セキュリティ'],
-      leader: '高橋 正',
-      funding: '民間企業',
-    },
-    {
-      id: '3',
-      title: 'ブロックチェーン基盤の学術出版プラットフォーム',
-      description: '分散型技術を活用した透明性の高い査読・出版システムの設計',
-      status: 'planning',
-      progress: 15,
-      startDate: '2025-11-01',
-      endDate: '2026-10-31',
-      universities: ['慶應義塾大学', '東京大学'],
-      members: 6,
-      tasks: { total: 12, completed: 2 },
-      papers: 0,
-      meetings: 2,
-      tags: ['ブロックチェーン', '学術出版', 'DID'],
-      leader: '鈴木 美咲',
-      funding: '大学助成金',
-    },
-    {
-      id: '4',
-      title: 'スマートシティにおけるIoTデータ解析',
-      description: '都市に設置されたIoTセンサーデータの収集・解析による都市最適化',
-      status: 'active',
-      progress: 78,
-      startDate: '2025-04-01',
-      endDate: '2025-12-31',
-      universities: ['東京工業大学', '横浜国立大学'],
-      members: 10,
-      tasks: { total: 30, completed: 23 },
-      papers: 5,
-      meetings: 12,
-      tags: ['スマートシティ', 'IoT', 'データ解析'],
-      leader: '渡辺 あゆみ',
-      funding: '自治体委託',
-    },
-  ]);
+  
+  // 実データからプロジェクトを取得
+  const { projects: fetchedProjects, loading: loadingProjects } = useProjects();
+  const [projects, setProjects] = useState<Project[]>(
+    fetchedProjects.length > 0 ? fetchedProjects : []
+  );
 
   const researchCategories = [
     'AI・機械学習',
@@ -583,7 +521,7 @@ export function Projects() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="category">研究分野 *</Label>
-                <Select value={newProject.category} onValueChange={(value) => setNewProject({ ...newProject, category: value })}>
+                <Select value={newProject.category} onValueChange={(value: string) => setNewProject({ ...newProject, category: value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="研究分野を選択" />
                   </SelectTrigger>
@@ -599,7 +537,7 @@ export function Projects() {
 
               <div>
                 <Label htmlFor="funding">資金源 *</Label>
-                <Select value={newProject.funding} onValueChange={(value) => setNewProject({ ...newProject, funding: value })}>
+                <Select value={newProject.funding} onValueChange={(value: string) => setNewProject({ ...newProject, funding: value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="資金源を選択" />
                   </SelectTrigger>

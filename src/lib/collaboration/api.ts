@@ -101,3 +101,27 @@ export async function markNotificationsRead(notificationIds: string[]) {
   }
   return response.json();
 }
+
+export async function fetchCollaborationPostDetail(postId: string) {
+  const response = await fetch(`/api/collaboration-posts/${postId}`);
+  if (!response.ok) {
+    throw new Error('Failed to load collaboration post');
+  }
+  return response.json() as Promise<{
+    id: string;
+    title: string;
+    body: string;
+    requiredSkills: string[];
+    status: CollaborationStatus;
+    dao: { id: string; name: string; description: string | null };
+    author: {
+      id: string;
+      displayName: string;
+      walletAddress: string;
+      email: string | null;
+      profile: Record<string, unknown> | null;
+    };
+    createdAt: string;
+    updatedAt: string;
+  }>;
+}
