@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import {
   Search,
   Filter,
@@ -9,17 +9,14 @@ import {
   ExternalLink,
   FileText,
   Calendar,
-  User,
   Hash,
   Award,
-  Heart,
   MessageSquare,
-  Users,
   Shield,
-  Lock,
   Globe,
   CheckCircle2
 } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -38,791 +35,632 @@ import {
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { toast } from 'sonner';
+import {
+  createResearchAsset,
+  fetchDaos,
+  fetchMemberships,
+  fetchProposals,
+  uploadAssetFile
+} from '@/lib/assets/api';
 
-interface Paper {
+type AssetVisibilityValue = 'PUBLIC' | 'INTERNAL' | 'LINK';
+
+type ResearchAssetRecord = {
   id: string;
   title: string;
-  author: string;
-  university: string;
-  department: string;
-  date: string;
-  abstract: string;
+  abstract: string | null;
+  ipfsCid: string;
+  artifactHash: string | null;
   tags: string[];
-  category: string;
-  txHash: string;
-  ipfsHash: string;
-  citations: number;
-  downloads: number;
-  likes: number;
-  comments: number;
-  verified: boolean;
-  accessType?: 'open' | 'restricted';
-}
+  visibility: AssetVisibilityValue;
+  createdAt: string;
+  owner: { id: string; displayName: string | null; walletAddress: string };
+  dao: { id: string; name: string };
+  proposal: { id: string; title: string; status: string } | null;
+  reviews: Array<{ id: string; status: string }>;
+};
+
+const visibilityLabels: Record<AssetVisibilityValue, { label: string; tone: string }> = {
+  PUBLIC: { label: '公開', tone: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  INTERNAL: { label: '内部限定', tone: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+  LINK: { label: 'リンク限定', tone: 'bg-amber-50 text-amber-700 border-amber-200' }
+};
+
+const tabFilters = [
+  { value: 'all', label: 'すべて' },
+  { value: 'linked', label: '提案リンク' },
+  { value: 'internal', label: '内部限定' },
+  { value: 'public', label: '公開' },
+  { value: 'reviewed', label: 'レビュー済み' }
+] as const;
+
+type TabFilter = (typeof tabFilters)[number]['value'];
+
+type MembershipOption = {
+  id: string;
+  user: {
+    id: string;
+    displayName: string | null;
+    walletAddress: string;
+  };
+};
 
 export function Repository() {
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<TabFilter>('all');
   const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [newPaper, setNewPaper] = useState({
+  const [selectedDaoId, setSelectedDaoId] = useState('');
+  const [selectedOwnerId, setSelectedOwnerId] = useState('');
+  const [selectedProposalId, setSelectedProposalId] = useState('');
+  const [visibilityFilter, setVisibilityFilter] = useState<'ALL' | AssetVisibilityValue>('ALL');
+  const [ipfsUpload, setIpfsUpload] = useState<{ cid: string; artifactHash: string } | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [newAsset, setNewAsset] = useState({
     title: '',
-    authors: '',
-    university: '',
-    department: '',
     abstract: '',
-    category: '',
     tags: '',
-    doi: '',
-    accessType: 'open',
-    fileName: ''
+    ipfsCid: '',
+    labId: '',
+    visibility: 'INTERNAL' as AssetVisibilityValue
   });
 
-  const [papers, setPapers] = useState<Paper[]>([
-    {
-      id: '1',
-      title: '深層学習を用いた医療画像診断の高精度化',
-      author: '山田 花子',
-      university: '東京大学',
-      department: '情報理工学系研究科',
-      date: '2025-10-20',
-      abstract:
-        '本研究では、深層学習技術を応用した医療画像診断システムの精度向上手法を提案する。CNNアーキテクチャの最適化により、既存手法と比較して15%の精度改善を実現した。',
-      tags: ['深層学習', '医療AI', 'CNN', '画像診断'],
-      category: 'コンピュータサイエンス',
-      txHash: '0xabcd...1234',
-      ipfsHash: 'QmX7Y8Z9...',
-      citations: 8,
-      downloads: 156,
-      likes: 42,
-      comments: 12,
-      verified: true
-    },
-    {
-      id: '2',
-      title: '再生可能エネルギーの効率的な蓄電システムの開発',
-      author: '佐藤 健',
-      university: '京都大学',
-      department: 'エネルギー科学研究科',
-      date: '2025-10-18',
-      abstract:
-        '太陽光・風力発電の変動性に対応する新型蓄電システムを開発。リチウムイオン電池の改良により、エネルギー密度を30%向上させることに成功した。',
-      tags: ['再生可能エネルギー', '蓄電技術', 'リチウムイオン電池'],
-      category: 'エネルギー工学',
-      txHash: '0xefgh...5678',
-      ipfsHash: 'QmA1B2C3...',
-      citations: 15,
-      downloads: 234,
-      likes: 67,
-      comments: 23,
-      verified: true
-    },
-    {
-      id: '3',
-      title: 'ブロックチェーンベースの学術論文査読システムの設計',
-      author: '鈴木 美咲',
-      university: '慶應義塾大学',
-      department: '理工学部',
-      date: '2025-10-15',
-      abstract:
-        'スマートコントラクトを活用した透明性の高い査読プロセスを提案。分散型識別子（DID）により査読者の匿名性とトレーサビリティを両立させる。',
-      tags: ['ブロックチェーン', 'ピアレビュー', 'DID', 'スマートコントラクト'],
-      category: '情報システム',
-      txHash: '0xijkl...9012',
-      ipfsHash: 'QmD4E5F6...',
-      citations: 5,
-      downloads: 98,
-      likes: 38,
-      comments: 9,
-      verified: true
-    },
-    {
-      id: '4',
-      title: '量子暗号通信の実用化に向けた研究',
-      author: '高橋 正',
-      university: '大阪大学',
-      department: '基礎工学研究科',
-      date: '2025-10-12',
-      abstract:
-        '量子鍵配送（QKD）プロトコルの改良により、長距離での安全な通信を実現。実験により100km以上での安定した鍵配送に成功した。',
-      tags: ['量子暗号', 'QKD', 'セキュリティ'],
-      category: '量子情報科学',
-      txHash: '0xmnop...3456',
-      ipfsHash: 'QmG7H8I9...',
-      citations: 22,
-      downloads: 187,
-      likes: 54,
-      comments: 18,
-      verified: true
-    },
-    {
-      id: '5',
-      title: '都市計画におけるAIシミュレーションの応用',
-      author: '伊藤 あゆみ',
-      university: '早稲田大学',
-      department: '創造理工学部',
-      date: '2025-10-10',
-      abstract:
-        '機械学習とエージェントベースモデリングを組み合わせ、都市の交通流動や人口分布を予測。持続可能な都市設計に貢献する。',
-      tags: ['都市計画', 'AI', 'シミュレーション', 'サステナビリティ'],
-      category: '都市工学',
-      txHash: '0xqrst...7890',
-      ipfsHash: 'QmJ1K2L3...',
-      citations: 11,
-      downloads: 143,
-      likes: 29,
-      comments: 7,
-      verified: true,
-      accessType: 'open' as 'open' | 'restricted'
+  const { data: daoData } = useQuery({
+    queryKey: ['daos'],
+    queryFn: fetchDaos
+  });
+
+  const daoOptions = useMemo(() => daoData?.daos ?? [], [daoData]);
+
+  useEffect(() => {
+    if (!selectedDaoId && daoOptions.length > 0) {
+      setSelectedDaoId(daoOptions[0].id);
     }
-  ]);
+  }, [daoOptions, selectedDaoId]);
 
-  const categories = [
-    'コンピュータサイエンス',
-    'エネルギー工学',
-    '量子情報科学',
-    '都市工学',
-    'バイオテクノロジー',
-    '材料科学',
-    '医療・ヘルスケア',
-    '環境科学',
-    '数学',
-    '物理学',
-    '化学',
-    'その他'
-  ];
+  useEffect(() => {
+    setSelectedProposalId('');
+  }, [selectedDaoId]);
 
-  const generateBlockchainHash = () => {
-    return (
-      '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('')
-    );
-  };
+  const { data: membershipData, isLoading: isLoadingMembers } = useQuery({
+    queryKey: ['repo-memberships', selectedDaoId],
+    queryFn: () => fetchMemberships({ daoId: selectedDaoId }),
+    enabled: !!selectedDaoId
+  });
 
-  const generateIPFSHash = () => {
-    return (
-      'Qm' +
-      Array.from({ length: 44 }, () =>
-        'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'.charAt(
-          Math.floor(Math.random() * 62)
-        )
-      ).join('')
-    );
-  };
+  const memberOptions = useMemo<MembershipOption[]>(
+    () => membershipData?.memberships ?? [],
+    [membershipData]
+  );
 
-  const simulateFileUpload = () => {
-    return new Promise((resolve) => {
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += 10;
-        setUploadProgress(progress);
-        if (progress >= 100) {
-          clearInterval(interval);
-          resolve(true);
+  useEffect(() => {
+    if (memberOptions.length > 0 && !selectedOwnerId) {
+      setSelectedOwnerId(memberOptions[0].user.id);
+    }
+    if (memberOptions.length === 0) {
+      setSelectedOwnerId('');
+    }
+  }, [memberOptions, selectedOwnerId]);
+
+  const { data: proposalData, isLoading: isLoadingProposals } = useQuery({
+    queryKey: ['repo-proposals', selectedDaoId],
+    queryFn: () => fetchProposals({ daoId: selectedDaoId }),
+    enabled: !!selectedDaoId
+  });
+
+  const assetQuery = useQuery({
+    queryKey: ['repo-assets', selectedDaoId, visibilityFilter],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedDaoId) {
+        params.set('daoId', selectedDaoId);
+      }
+      if (visibilityFilter !== 'ALL') {
+        params.set('visibility', visibilityFilter);
+      }
+      const response = await fetch(`/api/assets${params.toString() ? `?${params}` : ''}`);
+      if (!response.ok) {
+        throw new Error('Failed to load assets');
+      }
+      return (await response.json()) as { assets: ResearchAssetRecord[] };
+    }
+  });
+
+  const assets = useMemo<ResearchAssetRecord[]>(
+    () => assetQuery.data?.assets ?? [],
+    [assetQuery.data]
+  );
+
+  const filteredAssets = useMemo(() => {
+    const keywords = searchQuery.trim().toLowerCase();
+    return assets
+      .filter((asset) => {
+        if (!keywords) return true;
+        return (
+          asset.title.toLowerCase().includes(keywords) ||
+          asset.tags.some((tag) => tag.toLowerCase().includes(keywords)) ||
+          (asset.owner.displayName?.toLowerCase().includes(keywords) ?? false) ||
+          asset.dao.name.toLowerCase().includes(keywords)
+        );
+      })
+      .filter((asset) => {
+        switch (activeTab) {
+          case 'linked':
+            return Boolean(asset.proposal);
+          case 'internal':
+            return asset.visibility === 'INTERNAL';
+          case 'public':
+            return asset.visibility === 'PUBLIC';
+          case 'reviewed':
+            return asset.reviews.length > 0;
+          default:
+            return true;
         }
-      }, 200);
-    });
-  };
+      });
+  }, [assets, searchQuery, activeTab]);
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!file.name.toLowerCase().endsWith('.pdf')) {
-        toast.error('PDFファイルを選択してください');
-        return;
-      }
-      if (file.size > 50 * 1024 * 1024) {
-        toast.error('ファイルサイズは50MB以下にしてください');
-        return;
-      }
-      setNewPaper({ ...newPaper, fileName: file.name });
-      toast.success(`${file.name} を選択しました`);
-    }
-  };
-
-  const handlePublishPaper = async () => {
-    // Validation
-    if (!newPaper.title.trim()) {
-      toast.error('論文タイトルを入力してください');
-      return;
-    }
-    if (newPaper.title.length < 10) {
-      toast.error('論文タイトルは10文字以上で入力してください');
-      return;
-    }
-    if (!newPaper.authors.trim()) {
-      toast.error('著者名を入力してください');
-      return;
-    }
-    if (!newPaper.university.trim()) {
-      toast.error('所属機関を入力してください');
-      return;
-    }
-    if (!newPaper.department.trim()) {
-      toast.error('所属部署を入力してください');
-      return;
-    }
-    if (!newPaper.abstract.trim()) {
-      toast.error('アブストラクトを入力してください');
-      return;
-    }
-    if (newPaper.abstract.length < 100) {
-      toast.error('アブストラクトは100文字以上で入力してください');
-      return;
-    }
-    if (!newPaper.category) {
-      toast.error('研究分野を選択してください');
-      return;
-    }
-    if (!newPaper.tags.trim()) {
-      toast.error('キーワードを入力してください（カンマ区切りで1つ以上）');
-      return;
-    }
-    if (!newPaper.fileName) {
-      toast.error('論文ファイル（PDF）をアップロードしてください');
-      return;
-    }
-
-    // Simulate file upload to IPFS
-    toast.info('IPFSへアップロード中...');
-    await simulateFileUpload();
-
-    // Generate blockchain identifiers
-    const txHash = generateBlockchainHash();
-    const ipfsHash = generateIPFSHash();
-
-    // Parse authors and tags
-    const authorsList = newPaper.authors.split(',').map((a) => a.trim());
-    const tagsList = newPaper.tags
-      .split(',')
-      .map((t) => t.trim())
-      .filter((t) => t.length > 0);
-
-    // Create new paper
-    const paper: Paper = {
-      id: String(papers.length + 1),
-      title: newPaper.title.trim(),
-      author: authorsList[0], // Main author
-      university: newPaper.university.trim(),
-      department: newPaper.department.trim(),
-      date: new Date().toISOString().split('T')[0],
-      abstract: newPaper.abstract.trim(),
-      tags: tagsList,
-      category: newPaper.category,
-      txHash: txHash.slice(0, 10) + '...' + txHash.slice(-4),
-      ipfsHash: ipfsHash.slice(0, 10) + '...',
-      citations: 0,
-      downloads: 0,
-      likes: 0,
-      comments: 0,
-      verified: true,
-      accessType: newPaper.accessType as 'open' | 'restricted'
+  const summaryStats = useMemo(() => {
+    const total = assets.length;
+    const linked = assets.filter((asset) => asset.proposal).length;
+    const reviewed = assets.reduce((sum, asset) => sum + asset.reviews.length, 0);
+    const latest = assets[0]?.createdAt ? new Date(assets[0].createdAt) : null;
+    return {
+      total,
+      linked,
+      reviewed,
+      latest: latest ? latest.toLocaleDateString('ja-JP') : '—'
     };
+  }, [assets]);
 
-    setPapers([paper, ...papers]);
-    setIsPublishDialogOpen(false);
-    setUploadProgress(0);
+  const assetMutation = useMutation({
+    mutationFn: createResearchAsset,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['repo-assets'] });
+      setIsPublishDialogOpen(false);
+      setIpfsUpload(null);
+      setNewAsset({ title: '', abstract: '', tags: '', ipfsCid: '', labId: '', visibility: 'INTERNAL' });
+      toast.success('研究資産を登録しました');
+    },
+    onError: (error: unknown) => {
+      toast.error(error instanceof Error ? error.message : '研究資産の登録に失敗しました');
+    }
+  });
 
-    // Reset form
-    setNewPaper({
-      title: '',
-      authors: '',
-      university: '',
-      department: '',
-      abstract: '',
-      category: '',
-      tags: '',
-      doi: '',
-      accessType: 'open',
-      fileName: ''
-    });
+  const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
 
-    // Show success message with blockchain info
-    toast.success(
-      <div className="space-y-2">
-        <div>論文を公開しました</div>
-        <div className="text-xs space-y-1 pt-2 border-t border-gray-200">
-          <div className="flex items-center gap-1">
-            <Hash className="w-3 h-3" />
-            <span className="opacity-80">TX: {txHash.slice(0, 24)}...</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <FileText className="w-3 h-3" />
-            <span className="opacity-80">IPFS: {ipfsHash.slice(0, 24)}...</span>
-          </div>
-        </div>
-      </div>,
-      { duration: 6000 }
-    );
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error('ファイルサイズは50MB以下にしてください');
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      const result = await uploadAssetFile(file);
+      setIpfsUpload(result);
+      setNewAsset((prev) => ({ ...prev, ipfsCid: result.cid }));
+      toast.success('IPFS にアップロードしました');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'IPFS アップロードに失敗しました');
+    } finally {
+      setIsUploading(false);
+      event.target.value = '';
+    }
   };
+
+  const handleCreateAsset = () => {
+    if (!selectedDaoId) {
+      toast.error('DAO を選択してください');
+      return;
+    }
+    if (!selectedOwnerId) {
+      toast.error('登録者となるメンバーを選択してください');
+      return;
+    }
+    if (!newAsset.title.trim()) {
+      toast.error('タイトルを入力してください');
+      return;
+    }
+    if (!newAsset.ipfsCid.trim()) {
+      toast.error('IPFS CID を入力するかファイルをアップロードしてください');
+      return;
+    }
+
+    const tags = newAsset.tags
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0);
+
+    assetMutation.mutate({
+      daoId: selectedDaoId,
+      ownerId: selectedOwnerId,
+      title: newAsset.title.trim(),
+      abstract: newAsset.abstract.trim() || undefined,
+      ipfsCid: newAsset.ipfsCid.trim(),
+      artifactHash: ipfsUpload?.artifactHash,
+      tags,
+      visibility: newAsset.visibility,
+      proposalId: selectedProposalId || undefined,
+      labId: newAsset.labId ? Number(newAsset.labId) : undefined
+    });
+  };
+
+  const formatCid = (cid: string) => (cid.length > 18 ? `${cid.slice(0, 10)}…${cid.slice(-6)}` : cid);
+
+  const ownerLabel = (owner: ResearchAssetRecord['owner']) =>
+    owner.displayName ?? owner.walletAddress;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-gray-900 mb-2">研究レポジトリ</h1>
-          <p className="text-gray-600">ブロックチェーンで永続的に記録された学術論文</p>
-        </div>
-        <Button
-          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-          onClick={() => setIsPublishDialogOpen(true)}
-        >
-          <Upload className="w-4 h-4 mr-2" />
-          論文を公開
-        </Button>
-      </div>
-
-      {/* Search and Filters */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <Input
-                placeholder="論文タイトル、著者、キーワードで検索..."
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+        <CardContent className="p-6 space-y-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:flex-1">
+              <div className="relative w-full max-w-lg">
+                <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                <Input
+                  className="pl-10"
+                  placeholder="タイトル・タグ・研究者で検索"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                />
+              </div>
+              <Select value={selectedDaoId} onValueChange={setSelectedDaoId}>
+                <SelectTrigger className="w-full lg:w-56">
+                  <SelectValue placeholder="DAO を選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  {daoOptions.map((dao) => (
+                    <SelectItem key={dao.id} value={dao.id}>
+                      {dao.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={visibilityFilter}
+                onValueChange={(value) => setVisibilityFilter(value as 'ALL' | AssetVisibilityValue)}
+              >
+                <SelectTrigger className="w-full lg:w-48">
+                  <SelectValue placeholder="公開範囲" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">すべての公開範囲</SelectItem>
+                  <SelectItem value="PUBLIC">公開</SelectItem>
+                  <SelectItem value="INTERNAL">内部限定</SelectItem>
+                  <SelectItem value="LINK">リンク限定</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Select defaultValue="all">
-              <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="カテゴリ" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">すべて</SelectItem>
-                <SelectItem value="cs">コンピュータサイエンス</SelectItem>
-                <SelectItem value="energy">エネルギー工学</SelectItem>
-                <SelectItem value="quantum">量子情報科学</SelectItem>
-                <SelectItem value="urban">都市工学</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select defaultValue="latest">
-              <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="並び替え" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="latest">最新順</SelectItem>
-                <SelectItem value="popular">人気順</SelectItem>
-                <SelectItem value="citations">引用数順</SelectItem>
-                <SelectItem value="downloads">ダウンロード数順</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={() => setIsPublishDialogOpen(true)}>
+                <Upload className="mr-2 h-4 w-4" />
+                研究資産を登録
+              </Button>
+              <Button variant="outline" disabled={assets.length === 0}>
+                <Download className="mr-2 h-4 w-4" />
+                CSV エクスポート
+              </Button>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Filter className="h-4 w-4" />
+            <span>
+              {searchQuery ? '検索結果' : '最新の研究資産'}: {filteredAssets.length} 件
+            </span>
           </div>
         </CardContent>
       </Card>
 
-      {/* Papers List */}
-      <Tabs defaultValue="all" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="all">すべて ({papers.length})</TabsTrigger>
-          <TabsTrigger value="following">フォロー中</TabsTrigger>
-          <TabsTrigger value="mypapers">自分の論文</TabsTrigger>
-          <TabsTrigger value="saved">保存済み</TabsTrigger>
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-sm text-gray-500">登録済み資産</div>
+            <div className="text-3xl font-semibold text-gray-900">{summaryStats.total}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-sm text-gray-500">提案と連携</div>
+            <div className="text-3xl font-semibold text-gray-900">{summaryStats.linked}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-sm text-gray-500">累計レビュー</div>
+            <div className="text-3xl font-semibold text-gray-900">{summaryStats.reviewed}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-sm text-gray-500">最終更新</div>
+            <div className="text-3xl font-semibold text-gray-900">{summaryStats.latest}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabFilter)}>
+        <TabsList className="flex-wrap">
+          {tabFilters.map((tab) => (
+            <TabsTrigger key={tab.value} value={tab.value} className="capitalize">
+              {tab.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
-
-        <TabsContent value="all" className="space-y-4">
-          {papers.map((paper) => (
-            <Card key={paper.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex gap-4">
-                  <Avatar className="mt-1">
-                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
-                      {paper.author.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-4 mb-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-gray-900">{paper.title}</h3>
-                          {paper.verified && (
-                            <Badge
-                              variant="secondary"
-                              className="bg-green-50 text-green-700 border-green-200"
-                            >
-                              検証済
+        <TabsContent value={activeTab} className="mt-6 space-y-4">
+          {assetQuery.isLoading ? (
+            <Card>
+              <CardContent className="p-6 text-sm text-gray-500">研究資産を読み込み中...</CardContent>
+            </Card>
+          ) : assetQuery.isError ? (
+            <Card>
+              <CardContent className="p-6 text-sm text-red-600">
+                研究資産を取得できませんでした。時間をおいて再試行してください。
+              </CardContent>
+            </Card>
+          ) : filteredAssets.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center gap-3 p-8 text-center text-gray-500">
+                <FileText className="h-10 w-10 text-gray-300" />
+                <p>表示できる研究資産がありません。</p>
+                <Button variant="outline" onClick={() => setIsPublishDialogOpen(true)}>
+                  新しい資産を登録
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            filteredAssets.map((asset) => {
+              const visibilityMeta = visibilityLabels[asset.visibility];
+              return (
+                <Card key={asset.id}>
+                  <CardContent className="space-y-4 p-6">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2 text-xs">
+                          <Badge variant="secondary">{asset.dao.name}</Badge>
+                          <Badge className={visibilityMeta.tone}>{visibilityMeta.label}</Badge>
+                          {asset.proposal && (
+                            <Badge variant="outline" className="border-blue-200 text-blue-700">
+                              <CheckCircle2 className="mr-1 h-3 w-3" /> 提案リンク済
                             </Badge>
                           )}
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                          <User className="w-4 h-4" />
-                          <span>{paper.author}</span>
-                          <span>•</span>
-                          <span>{paper.university}</span>
-                          <span>•</span>
-                          <span>{paper.department}</span>
-                        </div>
+                        <h3 className="mt-3 text-xl font-semibold text-gray-900">{asset.title}</h3>
+                        <p className="mt-2 text-sm text-gray-600">
+                          {asset.abstract ?? 'アブストラクトは登録されていません。'}
+                        </p>
                       </div>
-                      <Badge variant="outline">{paper.category}</Badge>
-                    </div>
-
-                    <p className="text-gray-700 mb-4 leading-relaxed">{paper.abstract}</p>
-
-                    <div className="flex flex-wrap items-center gap-2 mb-4">
-                      {paper.tags.map((tag, tagIndex) => (
-                        <Badge key={tagIndex} variant="secondary" className="text-xs">
-                          #{tag}
-                        </Badge>
-                      ))}
-                    </div>
-
-                    <div className="flex items-center gap-6 text-sm text-gray-600 mb-4">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        <span>{paper.date}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Award className="w-4 h-4" />
-                        <span>{paper.citations} 引用</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Download className="w-4 h-4" />
-                        <span>{paper.downloads} DL</span>
-                      </div>
-                    </div>
-
-                    <div className="bg-gray-50 rounded-lg p-3 mb-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-                        <div className="flex items-center gap-2">
-                          <Hash className="w-3 h-3 text-gray-500" />
-                          <span className="text-gray-600">TX:</span>
-                          <span className="text-gray-900 font-mono">{paper.txHash}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-3 h-3 text-gray-500" />
-                          <span className="text-gray-600">IPFS:</span>
-                          <span className="text-gray-900 font-mono">{paper.ipfsHash}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-red-600 transition-colors">
-                          <Heart className="w-4 h-4" />
-                          <span>{paper.likes}</span>
-                        </button>
-                        <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600 transition-colors">
-                          <MessageSquare className="w-4 h-4" />
-                          <span>{paper.comments}</span>
-                        </button>
-                      </div>
-
                       <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm">
-                          <Download className="w-4 h-4 mr-2" />
-                          ダウンロード
-                        </Button>
-                        <Button size="sm">
-                          詳細を見る
-                          <ExternalLink className="w-4 h-4 ml-2" />
+                        <Button variant="ghost" size="sm" asChild>
+                          <a
+                            href={`https://ipfs.io/ipfs/${asset.ipfsCid}`}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
                         </Button>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
 
-        <TabsContent value="following">
-          <Card>
-            <CardContent className="p-12 text-center">
-              <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">フォローしている研究者の論文がここに表示されます</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                    <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                      <span className="flex items-center gap-2">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback>{ownerLabel(asset.owner).slice(0, 2)}</AvatarFallback>
+                        </Avatar>
+                        {ownerLabel(asset.owner)}
+                      </span>
+                      <span className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        {new Date(asset.createdAt).toLocaleDateString('ja-JP')}
+                      </span>
+                      <span className="flex items-center gap-2 font-mono">
+                        <Hash className="h-4 w-4" />
+                        {formatCid(asset.ipfsCid)}
+                      </span>
+                    </div>
 
-        <TabsContent value="mypapers">
-          <Card>
-            <CardContent className="p-12 text-center">
-              <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 mb-4">まだ論文を公開していません</p>
-              <Button className="bg-gradient-to-r from-blue-600 to-indigo-600">
-                <Upload className="w-4 h-4 mr-2" />
-                最初の論文を公開
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                    <div className="flex flex-wrap gap-2">
+                      {asset.tags.length === 0 ? (
+                        <Badge variant="outline" className="text-xs text-gray-500">
+                          タグ未設定
+                        </Badge>
+                      ) : (
+                        asset.tags.map((tag) => (
+                          <Badge key={tag} variant="outline" className="text-xs">
+                            #{tag}
+                          </Badge>
+                        ))
+                      )}
+                    </div>
 
-        <TabsContent value="saved">
-          <Card>
-            <CardContent className="p-12 text-center">
-              <Heart className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">保存した論文がここに表示されます</p>
-            </CardContent>
-          </Card>
+                    {asset.proposal && (
+                      <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-900">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <strong>提案:</strong>
+                          <span>{asset.proposal.title}</span>
+                          <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                            {asset.proposal.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                      <span className="flex items-center gap-1">
+                        <Award className="h-4 w-4" /> レビュー {asset.reviews.length}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <MessageSquare className="h-4 w-4" /> タグ {asset.tags.length}
+                      </span>
+                      {asset.artifactHash && (
+                        <span className="flex items-center gap-1 font-mono">
+                          <Shield className="h-4 w-4" /> {formatCid(asset.artifactHash)}
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1">
+                        <Globe className="h-4 w-4" />
+                        {asset.visibility === 'PUBLIC' ? 'オンチェーン同期対象' : 'DAO 内参照'}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
         </TabsContent>
       </Tabs>
 
-      {/* Publish Paper Dialog */}
       <Dialog open={isPublishDialogOpen} onOpenChange={setIsPublishDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>論文を公開</DialogTitle>
+            <DialogTitle>研究資産を登録</DialogTitle>
             <DialogDescription>
-              ブロックチェーン上に永続的に記録される学術論文を公開します。
-              論文はIPFSに保存され、改ざん不可能な形で記録されます。
+              DAO メンバーが生成した成果物を IPFS CID とともに保存します。
             </DialogDescription>
           </DialogHeader>
-
-          <div className="space-y-6 py-4">
-            {/* Blockchain Notice */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Shield className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-sm text-blue-900 mb-2">ブロックチェーン記録の特徴</div>
-                  <div className="text-xs text-blue-700 space-y-1">
-                    <div>✓ 論文ファイルはIPFSに分散保存されます</div>
-                    <div>✓ メタデータはブロックチェーンに永続記録されます</div>
-                    <div>✓ タイムスタンプにより研究の優先権を証明できます</div>
-                    <div>✓ 透明性の高い引用・評価システムで管理されます</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Paper Title */}
-            <div>
-              <Label htmlFor="paper-title">論文タイトル *</Label>
-              <Input
-                id="paper-title"
-                value={newPaper.title}
-                onChange={(e) => setNewPaper({ ...newPaper, title: e.target.value })}
-                placeholder="例: 深層学習を用いた医療画像診断の高精度化"
-                maxLength={200}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                {newPaper.title.length} / 200文字（最低10文字）
-              </p>
-            </div>
-
-            {/* Authors */}
-            <div>
-              <Label htmlFor="authors">著者 *</Label>
-              <Input
-                id="authors"
-                value={newPaper.authors}
-                onChange={(e) => setNewPaper({ ...newPaper, authors: e.target.value })}
-                placeholder="山田 花子, 佐藤 太郎（カンマ区切り、筆頭著者を最初に）"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                複数の著者がいる場合はカンマで区切ってください
-              </p>
-            </div>
-
-            {/* Institution */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="university">所属機関 *</Label>
-                <Input
-                  id="university"
-                  value={newPaper.university}
-                  onChange={(e) => setNewPaper({ ...newPaper, university: e.target.value })}
-                  placeholder="東京大学"
-                />
-              </div>
-              <div>
-                <Label htmlFor="department">所属部署 *</Label>
-                <Input
-                  id="department"
-                  value={newPaper.department}
-                  onChange={(e) => setNewPaper({ ...newPaper, department: e.target.value })}
-                  placeholder="情報理工学系研究科"
-                />
-              </div>
-            </div>
-
-            {/* Abstract */}
-            <div>
-              <Label htmlFor="abstract">アブストラクト *</Label>
-              <Textarea
-                id="abstract"
-                value={newPaper.abstract}
-                onChange={(e) => setNewPaper({ ...newPaper, abstract: e.target.value })}
-                placeholder="研究の背景、目的、方法、結果、結論を簡潔に記述してください。"
-                rows={8}
-                maxLength={2000}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                {newPaper.abstract.length} / 2000文字（最低100文字）
-              </p>
-            </div>
-
-            {/* Category & Access Type */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="category">研究分野 *</Label>
-                <Select
-                  value={newPaper.category}
-                  onValueChange={(value) => setNewPaper({ ...newPaper, category: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="研究分野を選択" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="access-type">公開設定 *</Label>
-                <Select
-                  value={newPaper.accessType}
-                  onValueChange={(value) => setNewPaper({ ...newPaper, accessType: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="公開設定を選択" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="open">
-                      <div className="flex items-center gap-2">
-                        <Globe className="w-4 h-4 text-green-600" />
-                        <span>オープンアクセス（推奨）</span>
-                      </div>
+          <div className="grid gap-4">
+            <Label className="text-sm font-medium text-gray-700">
+              登録者 (DAO メンバー)
+              <Select
+                value={selectedOwnerId}
+                onValueChange={setSelectedOwnerId}
+                disabled={memberOptions.length === 0 || isLoadingMembers}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="メンバーを選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  {memberOptions.map((member) => (
+                    <SelectItem key={member.user.id} value={member.user.id}>
+                      {member.user.displayName ?? member.user.walletAddress}
                     </SelectItem>
-                    <SelectItem value="restricted">
-                      <div className="flex items-center gap-2">
-                        <Lock className="w-4 h-4 text-orange-600" />
-                        <span>制限付きアクセス</span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Tags */}
-            <div>
-              <Label htmlFor="tags">キーワード *</Label>
-              <Input
-                id="tags"
-                value={newPaper.tags}
-                onChange={(e) => setNewPaper({ ...newPaper, tags: e.target.value })}
-                placeholder="深層学習, 医療AI, CNN, 画像診断（カンマ区切り）"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                論文の内容を表すキーワードをカンマ区切りで入力してください（3〜7個推奨）
-              </p>
-            </div>
-
-            {/* DOI (Optional) */}
-            <div>
-              <Label htmlFor="doi">DOI（オプション）</Label>
-              <Input
-                id="doi"
-                value={newPaper.doi}
-                onChange={(e) => setNewPaper({ ...newPaper, doi: e.target.value })}
-                placeholder="10.1000/xyz123"
-              />
-              <p className="text-xs text-gray-500 mt-1">既存のDOIがある場合は入力してください</p>
-            </div>
-
-            {/* File Upload */}
-            <div>
-              <Label htmlFor="paper-file">論文ファイル（PDF） *</Label>
-              <div className="mt-2">
-                <div className="flex items-center gap-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => document.getElementById('paper-file')?.click()}
-                    className="w-full justify-start"
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    {newPaper.fileName || 'PDFファイルを選択'}
-                  </Button>
-                  <input
-                    id="paper-file"
-                    type="file"
-                    accept=".pdf"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
-                </div>
-                {uploadProgress > 0 && uploadProgress < 100 && (
-                  <div className="mt-3">
-                    <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                      <span>IPFSへアップロード中...</span>
-                      <span>{uploadProgress}%</span>
-                    </div>
-                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-blue-600 transition-all duration-300"
-                        style={{ width: `${uploadProgress}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
-                <p className="text-xs text-gray-500 mt-2">PDFファイルのみ対応（最大50MB）</p>
-              </div>
-            </div>
-
-            {/* Info Boxes */}
-            <div className="space-y-3">
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                <div className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                  <div className="text-xs text-green-800">
-                    <div className="mb-1">オープンアクセス論文の特典</div>
-                    <div className="space-y-0.5 text-green-700">
-                      <div>• DAOトークン報酬が付与されます</div>
-                      <div>• より多くの研究者にリーチできます</div>
-                      <div>• 引用数・インパクトの向上が期待できます</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                <p className="text-xs text-yellow-800">
-                  ⚠️
-                  ブロックチェーンに記録された論文は削除できません。公開前に内容を十分に確認してください。
+                  ))}
+                </SelectContent>
+              </Select>
+              {memberOptions.length === 0 && (
+                <p className="mt-1 text-xs text-amber-600">
+                  選択した DAO のメンバーシップが必要です。
                 </p>
-              </div>
+              )}
+            </Label>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <Label className="text-sm font-medium text-gray-700">
+                タイトル
+                <Input
+                  className="mt-1"
+                  value={newAsset.title}
+                  onChange={(event) => setNewAsset((prev) => ({ ...prev, title: event.target.value }))}
+                  placeholder="量子鍵配送データセット"
+                />
+              </Label>
+              <Label className="text-sm font-medium text-gray-700">
+                ラボ ID (任意)
+                <Input
+                  className="mt-1"
+                  value={newAsset.labId}
+                  onChange={(event) => setNewAsset((prev) => ({ ...prev, labId: event.target.value }))}
+                  placeholder="0"
+                />
+              </Label>
+            </div>
+
+            <Label className="text-sm font-medium text-gray-700">
+              アブストラクト
+              <Textarea
+                className="mt-1"
+                rows={4}
+                value={newAsset.abstract}
+                onChange={(event) => setNewAsset((prev) => ({ ...prev, abstract: event.target.value }))}
+              />
+            </Label>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <Label className="text-sm font-medium text-gray-700">
+                タグ (カンマ区切り)
+                <Input
+                  className="mt-1"
+                  value={newAsset.tags}
+                  onChange={(event) => setNewAsset((prev) => ({ ...prev, tags: event.target.value }))}
+                  placeholder="quantum, cryptography"
+                />
+              </Label>
+              <Label className="text-sm font-medium text-gray-700">
+                公開範囲
+                <Select
+                  value={newAsset.visibility}
+                  onValueChange={(value) =>
+                    setNewAsset((prev) => ({ ...prev, visibility: value as AssetVisibilityValue }))
+                  }
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PUBLIC">公開</SelectItem>
+                    <SelectItem value="INTERNAL">内部限定</SelectItem>
+                    <SelectItem value="LINK">リンク限定</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Label>
+            </div>
+
+            <Label className="text-sm font-medium text-gray-700">
+              提案に関連付け (任意)
+              <Select
+                value={selectedProposalId}
+                onValueChange={setSelectedProposalId}
+                disabled={isLoadingProposals || !proposalData?.proposals?.length}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="提案を選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(proposalData?.proposals ?? []).map((proposal) => (
+                    <SelectItem key={proposal.id} value={proposal.id}>
+                      {proposal.title} ({proposal.status})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Label>
+
+            <Label className="text-sm font-medium text-gray-700">
+              IPFS CID
+              <Input
+                className="mt-1 font-mono"
+                value={newAsset.ipfsCid}
+                onChange={(event) => setNewAsset((prev) => ({ ...prev, ipfsCid: event.target.value }))}
+                placeholder="bafy..."
+              />
+            </Label>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <Label className="text-sm font-medium text-gray-700">
+                ファイルアップロード
+                <Input
+                  type="file"
+                  accept=".pdf,.csv,.json,.zip"
+                  className="mt-1"
+                  onChange={handleFileUpload}
+                  disabled={isUploading}
+                />
+                {ipfsUpload && (
+                  <p className="mt-1 text-xs text-emerald-600">CID: {ipfsUpload.cid}</p>
+                )}
+              </Label>
             </div>
           </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsPublishDialogOpen(false);
-                setUploadProgress(0);
-                setNewPaper({
-                  title: '',
-                  authors: '',
-                  university: '',
-                  department: '',
-                  abstract: '',
-                  category: '',
-                  tags: '',
-                  doi: '',
-                  accessType: 'open',
-                  fileName: ''
-                });
-              }}
-            >
+          <DialogFooter className="mt-6">
+            <Button variant="ghost" onClick={() => setIsPublishDialogOpen(false)}>
               キャンセル
             </Button>
-            <Button
-              onClick={handlePublishPaper}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-              disabled={uploadProgress > 0 && uploadProgress < 100}
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              論文を公開
+            <Button onClick={handleCreateAsset} disabled={assetMutation.isPending || isUploading}>
+              {assetMutation.isPending ? '登録中...' : '登録する'}
             </Button>
           </DialogFooter>
         </DialogContent>
