@@ -12,12 +12,16 @@ export function Dashboard() {
   const { events: upcomingEvents, loading: loadingEvents } = useEvents();
 
   // stats をメモ化：recentPapers が変わるときだけ再計算
-  const stats = useMemo(() => [
-    { label: '公開論文', value: recentPapers.length.toString(), icon: FileText, change: '+2 今月', color: 'blue' },
-    { label: '参加ゼミ', value: '3', icon: Users, change: '+1 今学期', color: 'purple' },
-    { label: '共同研究', value: '5', icon: Briefcase, change: '2 進行中', color: 'green' },
-    { label: 'DAOトークン', value: '850', icon: TrendingUp, change: '+50 今週', color: 'orange' },
-  ], [recentPapers.length]);
+  const stats = useMemo(() => {
+    const totalMembers = 3; // TODO: fetch from useProjects or useSeminars
+    const activeProjects = 2; // TODO: fetch from useProjects
+    return [
+      { label: '公開論文', value: recentPapers.length.toString(), icon: FileText, change: `+${Math.max(0, recentPapers.length - 1)} 今月`, color: 'blue' },
+      { label: '参加ゼミ', value: totalMembers.toString(), icon: Users, change: '+1 今学期', color: 'purple' },
+      { label: '共同研究', value: activeProjects.toString(), icon: Briefcase, change: '2 進行中', color: 'green' },
+      { label: 'DAOトークン', value: '850', icon: TrendingUp, change: '+50 今週', color: 'orange' },
+    ];
+  }, [recentPapers.length]);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -175,27 +179,27 @@ export function Dashboard() {
               <CardTitle>アクティビティ</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex gap-3">
-                <div className="w-2 h-2 rounded-full bg-blue-500 mt-2 flex-shrink-0"></div>
-                <div>
-                  <p className="text-sm text-gray-900">新しい論文に「いいね」しました</p>
-                  <p className="text-xs text-gray-500">2時間前</p>
+              {recentPapers.length > 0 && (
+                <div className="flex gap-3">
+                  <div className="w-2 h-2 rounded-full bg-blue-500 mt-2 flex-shrink-0"></div>
+                  <div>
+                    <p className="text-sm text-gray-900">新しい論文「{recentPapers[0].title}」を公開しました</p>
+                    <p className="text-xs text-gray-500">{recentPapers[0].date}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex gap-3">
-                <div className="w-2 h-2 rounded-full bg-green-500 mt-2 flex-shrink-0"></div>
-                <div>
-                  <p className="text-sm text-gray-900">共同研究プロジェクトに参加しました</p>
-                  <p className="text-xs text-gray-500">5時間前</p>
+              )}
+              {upcomingEvents.length > 0 && (
+                <div className="flex gap-3">
+                  <div className="w-2 h-2 rounded-full bg-green-500 mt-2 flex-shrink-0"></div>
+                  <div>
+                    <p className="text-sm text-gray-900">イベント「{upcomingEvents[0].title}」に参加予定</p>
+                    <p className="text-xs text-gray-500">{upcomingEvents[0].date}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex gap-3">
-                <div className="w-2 h-2 rounded-full bg-purple-500 mt-2 flex-shrink-0"></div>
-                <div>
-                  <p className="text-sm text-gray-900">ガバナンス提案に投票しました</p>
-                  <p className="text-xs text-gray-500">1日前</p>
-                </div>
-              </div>
+              )}
+              {recentPapers.length === 0 && upcomingEvents.length === 0 && (
+                <p className="text-center text-gray-500 py-4">アクティビティはまだありません</p>
+              )}
             </CardContent>
           </Card>
         </div>

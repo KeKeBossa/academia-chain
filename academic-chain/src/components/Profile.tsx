@@ -16,6 +16,10 @@ import { usePapers } from '../hooks/useData';
 
 export function Profile() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  
+  // 実データから論文を取得
+  const { papers: fetchedPapers, loading: loadingPapers } = usePapers();
+  
   const [userProfile, setUserProfile] = useState({
     name: '田中 太郎',
     did: 'did:ethr:0x1234567890abcdef',
@@ -26,7 +30,7 @@ export function Profile() {
     researchFields: ['量子コンピューティング', '機械学習', 'ブロックチェーン'],
     bio: '量子コンピューティングと機械学習の融合に興味を持っています。特に量子機械学習アルゴリズムの開発と応用に取り組んでいます。',
     reputation: 1247,
-    papers: 12,
+    papers: fetchedPapers.length,
     seminars: 3,
     projects: 5,
     daoTokens: 850,
@@ -36,13 +40,11 @@ export function Profile() {
   const [editForm, setEditForm] = useState(userProfile);
   const [newResearchField, setNewResearchField] = useState('');
 
-  // 実データから論文を取得
-  const { papers: fetchedPapers, loading: loadingPapers } = usePapers();
   const recentPapers = fetchedPapers.slice(0, 3).map(p => ({
     title: p.title,
     date: p.date,
-    citations: p.citations,
-    downloads: p.downloads,
+    citations: p.citations || 0,
+    downloads: p.downloads || 0,
   }));
 
   const achievements = [
@@ -138,7 +140,7 @@ export function Profile() {
         <Card>
           <CardContent className="p-4 text-center">
             <FileText className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-            <div className="text-2xl mb-1">{userProfile.papers}</div>
+            <div className="text-2xl mb-1">{fetchedPapers.length}</div>
             <p className="text-gray-600 text-sm">公開論文</p>
           </CardContent>
         </Card>
