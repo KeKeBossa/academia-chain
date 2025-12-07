@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Plus, Users, Calendar, Clock, CheckCircle2, AlertCircle, TrendingUp, FileText, MessageSquare, Hash, Link, Shield } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
@@ -34,6 +35,7 @@ interface Project {
 }
 
 export function Projects() {
+  const { t } = useTranslation();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newProject, setNewProject] = useState({
     title: '',
@@ -49,9 +51,19 @@ export function Projects() {
   
   // 実データからプロジェクトを取得
   const { projects: fetchedProjects, loading: loadingProjects } = useProjects();
-  const [projects, setProjects] = useState<Project[]>(
-    fetchedProjects.length > 0 ? fetchedProjects : []
-  );
+  
+  // localStorage からプロジェクトを取得
+  const getStoredProjects = (): Project[] => {
+    try {
+      const stored = localStorage.getItem('academic-chain:projects');
+      return stored ? JSON.parse(stored) : [];
+    } catch (error) {
+      console.warn('Failed to parse projects from localStorage:', error);
+      return [];
+    }
+  };
+
+  const [projects, setProjects] = useState<Project[]>(getStoredProjects());
 
   const researchCategories = [
     'AI・機械学習',
@@ -250,7 +262,7 @@ export function Projects() {
                 <CheckCircle2 className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-2xl">3</div>
+                <div className="text-2xl">{projects.filter(p => p.status === 'active').length}</div>
                 <p className="text-gray-600 text-sm">進行中</p>
               </div>
             </div>
@@ -264,7 +276,7 @@ export function Projects() {
                 <Clock className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-2xl">1</div>
+                <div className="text-2xl">{projects.filter(p => p.status === 'planning').length}</div>
                 <p className="text-gray-600 text-sm">計画中</p>
               </div>
             </div>
@@ -278,7 +290,7 @@ export function Projects() {
                 <Users className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-2xl">36</div>
+                <div className="text-2xl">{projects.reduce((sum, p) => sum + p.members, 0)}</div>
                 <p className="text-gray-600 text-sm">総参加者</p>
               </div>
             </div>
@@ -292,7 +304,7 @@ export function Projects() {
                 <FileText className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-2xl">9</div>
+                <div className="text-2xl">{projects.reduce((sum, p) => sum + p.papers, 0)}</div>
                 <p className="text-gray-600 text-sm">論文発表</p>
               </div>
             </div>
@@ -311,7 +323,7 @@ export function Projects() {
 
         <TabsContent value="all" className="space-y-4">
           {projects.map((project) => (
-            <Card key={project.id} className="hover:shadow-lg transition-shadow">
+            <Card key={project.id} className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardHeader>
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1">

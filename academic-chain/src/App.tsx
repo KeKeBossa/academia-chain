@@ -1,4 +1,5 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Home, FileText, Users, Briefcase, Vote, User, Wallet, Search, Bell, Settings, Shield, BookOpen, TrendingUp, Award } from 'lucide-react';
 import { Dashboard } from './components/Dashboard';
 import { Repository } from './components/Repository';
@@ -10,22 +11,60 @@ import { Search as SearchComponent } from './components/Search';
 import { Settings as SettingsComponent } from './components/Settings';
 import { Notifications } from './components/Notifications';
 import { NotificationPopup } from './components/NotificationPopup';
+import { ProfileSetup } from './components/ProfileSetup';
+import { PaperDetail } from './components/PaperDetail';
 import { Button } from './components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './components/ui/avatar';
 import { Badge } from './components/ui/badge';
 import { Input } from './components/ui/input';
 import { Toaster } from './components/ui/sonner';
 import { Popover, PopoverContent, PopoverTrigger } from './components/ui/popover';
-import { useNotifications, type Notification as NotificationData } from './hooks/useData';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './components/ui/dialog';
+import { useNotifications, type Notification as NotificationData, type ResearchPaper, getPapersFromStorage, calculateReputation, calculateVotingPower } from './hooks/useData';
+import { useUserProfile } from './hooks/useUserProfile';
 
-type TabType = 'dashboard' | 'repository' | 'seminars' | 'projects' | 'governance' | 'profile' | 'search' | 'settings' | 'notifications';
+type TabType = 'dashboard' | 'repository' | 'seminars' | 'projects' | 'governance' | 'profile' | 'search' | 'settings' | 'notifications' | 'paperDetail';
 
 export default function App() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
+  const [previousTab, setPreviousTab] = useState<TabType>('dashboard'); // 前のタブを記録
+  const [selectedPaperId, setSelectedPaperId] = useState<string | null>(null);
   const [isWalletConnected, setIsWalletConnected] = useState(false);
+  const [isReputationInfoOpen, setIsReputationInfoOpen] = useState(false);
   const [userDID, setUserDID] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [notificationPopupOpen, setNotificationPopupOpen] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0); // 論文データ更新トリガー
+  const [reputation, setReputation] = useState(0); // レピュテーションスコア
+  const [votingPower, setVotingPower] = useState(0); // DAO投票権
+  
+  // プロフィール初期化
+  const { profile, isProfileCompleted, isLoading: profileLoading } = useUserProfile();
+
+  // 初ログイン時プロフィール設定画面表示
+  const [showProfileSetup, setShowProfileSetup] = useState(false);
+
+  useEffect(() => {
+    // プロフィール読み込み完了後、未完成なら ProfileSetup を表示
+    if (!profileLoading && !isProfileCompleted) {
+      setShowProfileSetup(true);
+    }
+  }, [profileLoading, isProfileCompleted]);
+
+  // 初期状態をブラウザ履歴に設定（マウント時に1回だけ）
+  useEffect(() => {
+    // ページ読み込み時に初期状態を replaceState（pushState ではなく）
+    window.history.replaceState({ tab: 'dashboard', previousTab: 'dashboard' }, '', window.location.href);
+  }, []);
+  
+  // レピュテーションと投票権を計算（refreshTrigger 変更時に再計算）
+  useEffect(() => {
+    const newReputation = calculateReputation();
+    const newVotingPower = calculateVotingPower();
+    setReputation(newReputation);
+    setVotingPower(newVotingPower);
+  }, [refreshTrigger]);
   
   // 実データから通知を取得
   const userId = userDID || 'demo-user';
@@ -56,6 +95,49 @@ export default function App() {
     // NOTE: 実装時はバックエンドから既読通知を削除
     console.log('Delete all read');
   }, []);
+
+  // タブ切り替え時に履歴を記録する関数
+  const handleTabChange = useCallback((newTab: TabType) => {
+    if (newTab !== activeTab) {
+      const prevTab = activeTab;
+      setActiveTab(newTab);
+      // ブラウザ履歴に状態を記録（新しいタブと前のタブ情報を含める）
+      window.history.pushState({ tab: newTab, previousTab: prevTab }, '', window.location.href);
+    }
+  }, [activeTab]);
+
+  // 論文詳細ページへナビゲート
+  const navigateToPaperDetail = useCallback((paperId: string) => {
+    const prevTab = activeTab;
+    setSelectedPaperId(paperId);
+    setActiveTab('paperDetail');
+    // ブラウザ履歴に状態を記録
+    window.history.pushState({ tab: 'paperDetail', paperId, previousTab: prevTab }, '', window.location.href);
+  }, [activeTab]);
+
+  // ブラウザバックをハンドル
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      if (event.state) {
+        // state がある場合はそれを使用
+        setActiveTab(event.state.tab);
+        if (event.state.paperId) {
+          setSelectedPaperId(event.state.paperId);
+        } else if (event.state.tab !== 'paperDetail') {
+          setSelectedPaperId(null);
+        }
+        setPreviousTab(event.state.previousTab || 'dashboard');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // 選択された論文データを取得（refreshTrigger で最新データに更新）
+  const selectedPaper = selectedPaperId 
+    ? getPapersFromStorage().find(p => p.id === selectedPaperId) 
+    : null;
 
   const handleConnectWallet = () => {
     // Mock wallet connection
@@ -135,6 +217,10 @@ export default function App() {
     );
   }
 
+  if (showProfileSetup) {
+    return <ProfileSetup onComplete={() => setShowProfileSetup(false)} />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -144,7 +230,7 @@ export default function App() {
             <div className="flex items-center gap-8">
               <div 
                 className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-                onClick={() => setActiveTab('dashboard')}
+                onClick={() => handleTabChange('dashboard')}
               >
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
                   <Shield className="w-5 h-5 text-white" />
@@ -161,7 +247,7 @@ export default function App() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && searchQuery.trim()) {
-                      setActiveTab('search');
+                      handleTabChange('search');
                     }
                   }}
                 />
@@ -194,7 +280,7 @@ export default function App() {
                     onMarkAsRead={markAsRead}
                     onMarkAllAsRead={markAllAsRead}
                     onViewAll={() => {
-                      setActiveTab('notifications');
+                      handleTabChange('notifications');
                       setNotificationPopupOpen(false);
                     }} 
                   />
@@ -204,22 +290,24 @@ export default function App() {
               <Button 
                 variant="ghost" 
                 size="icon"
-                onClick={() => setActiveTab('settings')}
+                onClick={() => handleTabChange('settings')}
               >
                 <Settings className="w-5 h-5" />
               </Button>
 
               <div 
                 className="flex items-center gap-3 pl-4 border-l border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
-                onClick={() => setActiveTab('profile')}
+                onClick={() => handleTabChange('profile')}
               >
                 <div className="text-right hidden sm:block">
-                  <div className="text-sm text-gray-900">田中 太郎</div>
-                  <div className="text-xs text-gray-500">{userDID}</div>
+                  <div className="text-sm text-gray-900">{profile?.name || '未設定'}</div>
+                  <div className="text-xs text-gray-500">{profile?.university || '大学未選択'}</div>
                 </div>
                 <Avatar>
                   <AvatarImage src="" />
-                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white">田中</AvatarFallback>
+                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
+                    {profile?.name?.charAt(0) || 'U'}
+                  </AvatarFallback>
                 </Avatar>
               </div>
 
@@ -240,7 +328,7 @@ export default function App() {
         <aside className="w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-4rem)] sticky top-16">
           <nav className="p-4 space-y-1">
             <button
-              onClick={() => setActiveTab('dashboard')}
+              onClick={() => handleTabChange('dashboard')}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                 activeTab === 'dashboard' 
                   ? 'bg-blue-50 text-blue-700' 
@@ -252,7 +340,7 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setActiveTab('notifications')}
+              onClick={() => handleTabChange('notifications')}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                 activeTab === 'notifications' 
                   ? 'bg-blue-50 text-blue-700' 
@@ -269,7 +357,7 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setActiveTab('search')}
+              onClick={() => handleTabChange('search')}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                 activeTab === 'search' 
                   ? 'bg-blue-50 text-blue-700' 
@@ -281,7 +369,7 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setActiveTab('repository')}
+              onClick={() => handleTabChange('repository')}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                 activeTab === 'repository' 
                   ? 'bg-blue-50 text-blue-700' 
@@ -293,7 +381,7 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setActiveTab('seminars')}
+              onClick={() => handleTabChange('seminars')}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                 activeTab === 'seminars' 
                   ? 'bg-blue-50 text-blue-700' 
@@ -305,7 +393,7 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setActiveTab('projects')}
+              onClick={() => handleTabChange('projects')}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                 activeTab === 'projects' 
                   ? 'bg-blue-50 text-blue-700' 
@@ -317,7 +405,7 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setActiveTab('governance')}
+              onClick={() => handleTabChange('governance')}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                 activeTab === 'governance' 
                   ? 'bg-blue-50 text-blue-700' 
@@ -329,7 +417,7 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setActiveTab('profile')}
+              onClick={() => handleTabChange('profile')}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                 activeTab === 'profile' 
                   ? 'bg-blue-50 text-blue-700' 
@@ -343,9 +431,23 @@ export default function App() {
 
           <div className="p-4 mt-4">
             <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-4 text-white">
-              <Award className="w-8 h-8 mb-2" />
-              <div className="mb-1">レピュテーション</div>
-              <div className="text-2xl mb-2">1,247</div>
+              <div className="flex items-start gap-3 mb-3">
+                <div className="flex flex-col items-start gap-1">
+                  <div className="flex items-center gap-2">
+                    <Award className="w-8 h-8" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-white hover:text-blue-300 hover:bg-transparent transition-colors duration-200 px-2 py-1 border-2 border-gray-200 rounded"
+                      onClick={() => setIsReputationInfoOpen(true)}
+                    >
+                      HOW TO GET
+                    </Button>
+                  </div>
+                  <div className="text-sm">レピュテーション</div>
+                </div>
+              </div>
+              <div className="text-2xl mb-2">{reputation.toLocaleString()}</div>
               <p className="text-blue-100 text-sm">
                 研究貢献スコア
               </p>
@@ -353,13 +455,65 @@ export default function App() {
           </div>
         </aside>
 
+        {/* Reputation Info Dialog */}
+        <Dialog open={isReputationInfoOpen} onOpenChange={setIsReputationInfoOpen}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-blue-600" />
+                レピュテーション獲得方法
+              </DialogTitle>
+              <DialogDescription>
+                研究活動を通じてレピュテーションスコアを獲得できます
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
+                <div className="text-sm font-semibold text-gray-900 mb-1">📄 論文公開</div>
+                <p className="text-xs text-gray-600 mb-2">1件あたり <span className="font-bold text-blue-600">100点</span></p>
+                <p className="text-xs text-gray-500">論文を公開するたびにスコアが加算されます</p>
+              </div>
+              <div className="bg-purple-50 rounded-lg p-3 border border-purple-100">
+                <div className="text-sm font-semibold text-gray-900 mb-1">👍 いいね獲得</div>
+                <p className="text-xs text-gray-600 mb-2">1件あたり <span className="font-bold text-purple-600">5点</span></p>
+                <p className="text-xs text-gray-500">論文が他のユーザーからいいねされます</p>
+              </div>
+              <div className="bg-pink-50 rounded-lg p-3 border border-pink-100">
+                <div className="text-sm font-semibold text-gray-900 mb-1">💬 コメント獲得</div>
+                <p className="text-xs text-gray-600 mb-2">1件あたり <span className="font-bold text-pink-600">10点</span></p>
+                <p className="text-xs text-gray-500">論文へのコメントでスコアが増加します</p>
+              </div>
+              <div className="bg-green-50 rounded-lg p-3 border border-green-100">
+                <div className="text-sm font-semibold text-gray-900 mb-1">🎓 セミナー開催</div>
+                <p className="text-xs text-gray-600 mb-2">1件あたり <span className="font-bold text-green-600">50点</span></p>
+                <p className="text-xs text-gray-500">セミナーやイベントを開催できます</p>
+              </div>
+              <div className="bg-orange-50 rounded-lg p-3 border border-orange-100">
+                <div className="text-sm font-semibold text-gray-900 mb-1">🤝 プロジェクト参加</div>
+                <p className="text-xs text-gray-600 mb-2">1件あたり <span className="font-bold text-orange-600">30点</span></p>
+                <p className="text-xs text-gray-500">共同研究プロジェクトに参加できます</p>
+              </div>
+              <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-100">
+                <div className="text-sm font-semibold text-gray-900 mb-1">🏆 最大値</div>
+                <p className="text-xs text-gray-600 mb-2">上限 <span className="font-bold text-indigo-600">10,000点</span></p>
+                <p className="text-xs text-gray-500">レピュテーションは最大10,000点です</p>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Main Content */}
         <main className="flex-1 p-6">
-          {activeTab === 'dashboard' && <Dashboard />}
-          {activeTab === 'repository' && <Repository />}
+          {activeTab === 'dashboard' && (
+            <Dashboard 
+              onNavigateToPaper={navigateToPaperDetail}
+              onNavigateToRepository={() => setActiveTab('repository')}
+            />
+          )}
+          {activeTab === 'repository' && <Repository onNavigateToPaper={navigateToPaperDetail} />}
           {activeTab === 'seminars' && <Seminars />}
           {activeTab === 'projects' && <Projects />}
-          {activeTab === 'governance' && <Governance />}
+          {activeTab === 'governance' && <Governance votingPower={votingPower} />}
           {activeTab === 'search' && <SearchComponent initialQuery={searchQuery} onQueryChange={setSearchQuery} />}
           {activeTab === 'notifications' && (
             <Notifications 
@@ -372,6 +526,28 @@ export default function App() {
           )}
           {activeTab === 'settings' && <SettingsComponent />}
           {activeTab === 'profile' && <Profile />}
+          {activeTab === 'paperDetail' && selectedPaper && (
+            <PaperDetail 
+              paper={selectedPaper}
+              onBack={() => window.history.back()}
+              onLike={(id) => {
+                console.log('Liked:', id);
+                // refreshTrigger を更新して selectedPaper を再取得
+                setRefreshTrigger(prev => prev + 1);
+              }}
+              onDownload={(id) => {
+                console.log('Downloaded:', id);
+                // refreshTrigger を更新してダウンロード数を反映
+                setRefreshTrigger(prev => prev + 1);
+              }}
+              onDelete={(id) => {
+                console.log('Deleted:', id);
+                // 削除後、自動的にバックして UI を更新
+                window.history.back();
+                setRefreshTrigger(prev => prev + 1);
+              }}
+            />
+          )}
         </main>
       </div>
       <Toaster position="top-right" />

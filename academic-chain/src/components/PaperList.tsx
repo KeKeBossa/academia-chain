@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useCallback, useMemo } from 'react';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
@@ -10,20 +11,17 @@ interface PaperListProps {
   papers: ResearchPaper[];
   onLike: (paperId: string) => void;
   onDownload: (paperId: string) => void;
+  onNavigateToPaper?: (paperId: string) => void;
 }
 
 /**
  * PaperList: 論文リスト表示コンポーネント
  * Repository から分割して独立化
  */
-export function PaperList({ papers, onLike, onDownload }: PaperListProps) {
+export function PaperList({ papers, onLike, onDownload, onNavigateToPaper }: PaperListProps) {
+  const { t } = useTranslation();
   // メモ化：各論文を再計算しない
   const memoizedPapers = useMemo(() => papers, [papers]);
-
-  // コールバック：いいね
-  const handleLike = useCallback((paperId: string) => {
-    onLike(paperId);
-  }, [onLike]);
 
   // コールバック：ダウンロード
   const handleDownload = useCallback((paperId: string) => {
@@ -44,8 +42,8 @@ export function PaperList({ papers, onLike, onDownload }: PaperListProps) {
         <PaperCard 
           key={paper.id} 
           paper={paper} 
-          onLike={handleLike}
           onDownload={handleDownload}
+          onNavigateToPaper={onNavigateToPaper}
         />
       ))}
     </div>
@@ -54,17 +52,31 @@ export function PaperList({ papers, onLike, onDownload }: PaperListProps) {
 
 interface PaperCardProps {
   paper: ResearchPaper;
-  onLike: (paperId: string) => void;
   onDownload: (paperId: string) => void;
+  onNavigateToPaper?: (paperId: string) => void;
 }
 
 /**
  * PaperCard: 個別の論文カードコンポーネント
  * 再レンダリング最適化のため React.memo で保護
  */
-function PaperCard({ paper, onLike, onDownload }: PaperCardProps) {
+function PaperCard({ paper, onDownload, onNavigateToPaper }: PaperCardProps) {
+  const handleDownload = () => {
+    // PDF がある場合はダウンロード
+    if (paper.pdfUrl) {
+      const link = document.createElement('a');
+      link.href = paper.pdfUrl;
+      link.download = `${paper.title}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+    // コールバックを実行
+    onDownload(paper.id);
+  };
+
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-md transition-shadow cursor-pointer">
       <CardContent className="p-6">
         <div className="flex gap-4">
           <Avatar className="mt-1">
@@ -143,29 +155,30 @@ function PaperCard({ paper, onLike, onDownload }: PaperCardProps) {
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <button 
-                  onClick={() => onLike(paper.id)}
-                  className="flex items-center gap-1 text-sm text-gray-600 hover:text-red-600 transition-colors"
-                >
-                  <Heart className="w-4 h-4" />
+                <div className="flex items-center gap-1 text-sm text-gray-600">
+                  <Heart className="w-4 h-4 text-gray-600" />
                   <span>{paper.likes}</span>
-                </button>
-                <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600 transition-colors">
-                  <MessageSquare className="w-4 h-4" />
+                </div>
+                <div className="flex items-center gap-1 text-sm text-gray-600">
+                  <MessageSquare className="w-4 h-4 text-gray-600" />
                   <span>{paper.comments}</span>
-                </button>
+                </div>
               </div>
 
               <div className="flex items-center gap-2">
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => onDownload(paper.id)}
+                  onClick={handleDownload}
                 >
                   <Download className="w-4 h-4 mr-2" />
                   ダウンロード
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => onNavigateToPaper?.(paper.id)}
+                >
                   詳細
                 </Button>
               </div>

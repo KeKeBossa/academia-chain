@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Search, Upload, Hash, FileText, Shield, Globe, Lock, Users, Heart } from 'lucide-react';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
@@ -9,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { toast } from 'sonner';
-import { usePapers } from '../hooks/useData';
+import { usePapers, savePaperToStorage } from '../hooks/useData';
 import { Skeleton } from './ui/skeleton';
 import { PaperList } from './PaperList';
 
@@ -28,11 +29,19 @@ const CATEGORIES = [
   'その他',
 ];
 
-export function Repository() {
+interface RepositoryProps {
+  onNavigateToPaper?: (paperId: string) => void;
+}
+
+export function Repository({ onNavigateToPaper }: RepositoryProps) {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('latest');
   const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  
   const [newPaper, setNewPaper] = useState({
     title: '',
     authors: '',
@@ -42,7 +51,7 @@ export function Repository() {
     category: '',
     tags: '',
     doi: '',
-    accessType: 'open',
+    accessType: 'open' as 'open' | 'restricted',
     fileName: '',
   });
 
@@ -50,7 +59,8 @@ export function Repository() {
     category: selectedCategory === 'all' ? undefined : selectedCategory,
   }), [selectedCategory]);
 
-  const { papers: fetchedPapers, loading: loadingPapers } = usePapers(searchQuery, filters);
+  // refreshTrigger が変わるたびにデータを再読み込み
+  const { papers: fetchedPapers, loading: loadingPapers } = usePapers(searchQuery, filters, refreshTrigger);
 
   const sortedPapers = useMemo(() => {
     if (!fetchedPapers) return [];
@@ -78,6 +88,7 @@ export function Repository() {
         toast.error('ファイルサイズは50MB以下にしてください');
         return;
       }
+      setPdfFile(file);
       setNewPaper({ ...newPaper, fileName: file.name });
       toast.success(`${file.name} を選択しました`);
     }
@@ -113,22 +124,62 @@ export function Repository() {
     toast.info('IPFSへアップロード中...');
     await new Promise(resolve => setTimeout(resolve, 2000));
 
+    // Generate mock IPFS hash and transaction hash
+    const ipfsHash = 'QmVYBU-' + Array.from({ length: 40 }, () => 
+      Math.random().toString(36)[2]
+    ).join('').substring(0, 40);
+    
     const txHash = '0x' + Array.from({ length: 64 }, () => 
       Math.floor(Math.random() * 16).toString(16)
     ).join('');
 
-    toast.success(
-      <div className="space-y-2">
-        <div>論文を公開しました</div>
-        <div className="text-xs space-y-1 pt-2 border-t border-gray-200">
-          <div className="flex items-center gap-1">
-            <Hash className="w-3 h-3" />
-            <span>TX: {txHash.slice(0, 24)}...</span>
-          </div>
-        </div>
-      </div>,
-      { duration: 6000 }
-    );
+    // PDF ファイルを Base64 にエンコード
+    let pdfUrl: string | undefined;
+    if (pdfFile) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        pdfUrl = event.target?.result as string;
+        
+        // Add paper to storage using the utility function
+        const paper = savePaperToStorage({
+          title: newPaper.title,
+          author: newPaper.authors,
+          university: newPaper.university,
+          department: newPaper.department,
+          abstract: newPaper.abstract,
+          category: newPaper.category,
+          tags: newPaper.tags.split(',').map(t => t.trim()).filter(t => t),
+          date: new Date().toISOString(),
+          ipfsHash,
+          txHash,
+          accessType: newPaper.accessType as 'open' | 'restricted',
+          pdfUrl,
+        });
+        
+        showSuccessToast(txHash, ipfsHash);
+      };
+      reader.readAsDataURL(pdfFile);
+    } else {
+      // Add paper to storage without PDF
+      const paper = savePaperToStorage({
+        title: newPaper.title,
+        author: newPaper.authors,
+        university: newPaper.university,
+        department: newPaper.department,
+        abstract: newPaper.abstract,
+        category: newPaper.category,
+        tags: newPaper.tags.split(',').map(t => t.trim()).filter(t => t),
+        date: new Date().toISOString(),
+        ipfsHash,
+        txHash,
+        accessType: newPaper.accessType as 'open' | 'restricted',
+      });
+      
+      showSuccessToast(txHash, ipfsHash);
+    }
+
+    // Trigger data refresh in usePapers hook
+    setRefreshTrigger(prev => prev + 1);
 
     setIsPublishDialogOpen(false);
     setNewPaper({
@@ -143,14 +194,38 @@ export function Repository() {
       accessType: 'open',
       fileName: '',
     });
-  }, [validateForm]);
+    setPdfFile(null);
+  }, [validateForm, newPaper, pdfFile]);
+
+  const showSuccessToast = (txHash: string, ipfsHash: string) => {
+    toast.success(
+      <div className="space-y-2">
+        <div>論文を公開しました</div>
+        <div className="text-xs space-y-1 pt-2 border-t border-gray-200">
+          <div className="flex items-center gap-1">
+            <Hash className="w-3 h-3" />
+            <span>TX: {txHash.slice(0, 24)}...</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <FileText className="w-3 h-3" />
+            <span>IPFS: {ipfsHash.slice(0, 20)}...</span>
+          </div>
+        </div>
+      </div>,
+      { duration: 6000 }
+    );
+  };
 
   const handleLike = useCallback((paperId: string) => {
     toast.success('いいねしました');
+    // UI を再レンダリングして最新のいいね数を表示
+    setRefreshTrigger(prev => prev + 1);
   }, []);
 
   const handleDownload = useCallback((paperId: string) => {
     toast.success('ダウンロード開始');
+    // UI を再レンダリングしてダウンロード数を更新
+    setRefreshTrigger(prev => prev + 1);
   }, []);
 
   return (
@@ -221,7 +296,7 @@ export function Repository() {
           ) : sortedPapers.length === 0 ? (
             <div className="text-center py-12 text-gray-500">論文が見つかりません</div>
           ) : (
-            <PaperList papers={sortedPapers} onLike={handleLike} onDownload={handleDownload} />
+            <PaperList papers={sortedPapers} onLike={handleLike} onDownload={handleDownload} onNavigateToPaper={onNavigateToPaper} />
           )}
         </TabsContent>
 
@@ -337,7 +412,7 @@ export function Repository() {
               </div>
               <div>
                 <Label>公開設定 *</Label>
-                <Select value={newPaper.accessType} onValueChange={(value: string) => setNewPaper({ ...newPaper, accessType: value })}>
+                <Select value={newPaper.accessType} onValueChange={(value: string) => setNewPaper({ ...newPaper, accessType: value as 'open' | 'restricted' })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

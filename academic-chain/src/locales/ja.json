@@ -1,0 +1,194 @@
+{
+  "common": {
+    "dashboard": "ダッシュボード",
+    "repository": "リポジトリ",
+    "seminars": "ゼミ・研究室",
+    "projects": "プロジェクト",
+    "governance": "ガバナンス",
+    "profile": "プロフィール",
+    "search": "検索",
+    "settings": "設定",
+    "notifications": "通知",
+    "logout": "ログアウト",
+    "back": "戻る"
+  },
+  "dashboard": {
+    "title": "ダッシュボード",
+    "latestPapers": "最新の研究論文",
+    "noPapersRegistered": "論文がまだ登録されていません",
+    "viewAllPapers": "すべての論文を見る",
+    "newPaperPublished": "新しい論文「{{title}}」を公開しました",
+    "publishedPapers": "公開論文",
+    "thisMonth": "今月"
+  },
+  "repository": {
+    "title": "研究リポジトリ",
+    "description": "ブロックチェーンで永続的に記録された学術論文",
+    "publishPaper": "論文を公開",
+    "myPapers": "自分の論文",
+    "followingPapers": "フォロー中の論文",
+    "myPublishedPapers": "公開した論文",
+    "savedPapers": "保存した論文",
+    "noFollowingPapers": "フォロー中の論文がありません",
+    "noPublishedPapers": "公開した論文がありません",
+    "noSavedPapers": "保存した論文がありません",
+    "publishDialog": {
+      "title": "論文を公開",
+      "description": "ブロックチェーン上に永続的に記録される学術論文を公開します"
+    },
+    "form": {
+      "paperTitle": "論文タイトル *",
+      "paperFile": "論文ファイル（PDF） *",
+      "titleRequired": "論文タイトルを入力してください",
+      "titleMinLength": "論文タイトルは10文字以上で入力してください",
+      "fileRequired": "論文ファイル（PDF）をアップロードしてください",
+      "publishSuccess": "論文を公開しました",
+      "publishError": "論文の発行に失敗しました"
+    },
+    "actions": {
+      "like": "いいね",
+      "likeSuccess": "いいねしました",
+      "comment": "コメント",
+      "delete": "削除",
+      "share": "共有",
+      "download": "ダウンロード"
+    }
+  },
+  "governance": {
+    "title": "ガバナンス",
+    "yourVotingPower": "あなたの投票権",
+    "votingPowerDescription": "研究活動への貢献に応じて投票権が付与されます",
+    "totalVotingPower": "総投票権",
+    "ongoingVotes": "進行中の投票",
+    "participatedVotes": "参加した投票",
+    "submittedProposals": "提出した提案",
+    "howToGetButton": "HOW TO GET",
+    "votingPowerDialogTitle": "投票権（DAOトークン）獲得方法",
+    "votingPowerDialogDescription": "研究貢献度に応じてDAO投票権が付与されます",
+    "votingMethods": {
+      "paperPublished": {
+        "title": "📄 論文公開",
+        "description": "論文公開時にトークン獲得"
+      },
+      "likesReceived": {
+        "title": "👍 いいね獲得",
+        "description": "論文が評価されるとトークン加算"
+      },
+      "commentsReceived": {
+        "title": "💬 コメント獲得",
+        "description": "コメント受け取り時にトークン加算"
+      },
+      "seminarHosted": {
+        "title": "🎓 セミナー開催",
+        "description": "セミナー開催でトークン獲得"
+      },
+      "projectParticipation": {
+        "title": "👥 プロジェクト参加",
+        "description": "プロジェクト参加時にトークン加算"
+      }
+    },
+    "maxVotingPower": "投票権は最大5,000トークンです",
+    "hint": "💡 {{span}}ヒント:{{/span}} 更多的研究活動（論文公開、セミナー開催など）を行うことで、投票権が増加し、DAO内での発言力が高まります。"
+  },
+  "reputation": {
+    "title": "レピュテーション",
+    "howToGetButton": "HOW TO GET",
+    "reputationDialogTitle": "レピュテーション獲得方法",
+    "reputationDialogDescription": "研究活動に応じてレピュテーションスコアが付与されます",
+    "reputationMethods": {
+      "paperPublished": {
+        "title": "📄 論文公開",
+        "description": "論文公開時にスコア獲得"
+      },
+      "likesReceived": {
+        "title": "👍 いいね獲得",
+        "description": "論文が評価されるとスコア加算"
+      },
+      "commentsReceived": {
+        "title": "💬 コメント獲得",
+        "description": "コメント受け取り時にスコア加算"
+      },
+      "seminarHosted": {
+        "title": "🎓 セミナー開催",
+        "description": "セミナー開催でスコア獲得"
+      },
+      "projectParticipation": {
+        "title": "👥 プロジェクト参加",
+        "description": "プロジェクト参加時にスコア加算"
+      }
+    },
+    "maxReputation": "レピュテーションは最大10,000スコアです",
+    "score": "レピュテーション"
+  },
+  "seminars": {
+    "title": "ゼミ・研究室",
+    "myLabs": "私の研究室",
+    "discoverLabs": "研究室を探す",
+    "paperCount": "論文数",
+    "memberCount": "メンバー数",
+    "info": "✓ レピュテーションスコアで研究活動が評価されます"
+  },
+  "projects": {
+    "title": "プロジェクト",
+    "noProjects": "プロジェクトが見つかりません"
+  },
+  "profile": {
+    "title": "プロフィール",
+    "papers": "論文",
+    "allPapers": "すべての論文を見る",
+    "viewedPapers": "閲覧した論文",
+    "myPublishedPapers": "公開論文",
+    "achievements": "実績",
+    "firstPaper": "初論文公開",
+    "tenPapersAchievement": "10論文公開達成",
+    "reputation": "レピュテーション"
+  },
+  "search": {
+    "title": "検索",
+    "placeholder": "論文、研究室、プロジェクト、提案を横断検索",
+    "papers": "論文",
+    "seminars": "研究室",
+    "projects": "プロジェクト",
+    "proposals": "提案",
+    "paperType": "論文"
+  },
+  "settings": {
+    "title": "設定",
+    "notifications": "通知設定",
+    "privacy": "プライバシー",
+    "general": "一般設定",
+    "commentNotification": "コメント通知",
+    "commentNotificationDesc": "論文やプロジェクトへのコメント",
+    "citationNotification": "引用通知",
+    "citationNotificationDesc": "あなたの論文が引用されたとき",
+    "profileVisibility": "プロフィール公開範囲",
+    "profileVisibilityDesc": "論文、プロジェクト参加履歴を公開",
+    "blockchainWarning": "⚠️ ブロックチェーン上の公開データ（論文、投票履歴など）は非公開にできません。",
+    "ipfsGateway": "IPFSゲートウェイ",
+    "ipfsGatewayDesc": "論文ファイルの取得に使用されるIPFSゲートウェイ"
+  },
+  "notifications": {
+    "title": "通知",
+    "noNotifications": "通知はありません",
+    "markAllAsRead": "すべて既読にする",
+    "deleteAllRead": "既読削除"
+  },
+  "paperDetail": {
+    "deleteConfirm": "この論文を削除してもよろしいですか？（ブロックチェーン上の記録は削除されません）",
+    "likes": "いいね",
+    "comments": "コメント",
+    "noComments": "コメントはまだありません",
+    "addComment": "コメントを追加...",
+    "relatedPapers": "同じ分野の論文",
+    "noRelatedPapers": "関連論文はまだロードされていません",
+    "shareText": "「{{title}}」を読みました\n著者: {{author}}\n\n#学術論文 #研究 #AcademicChain"
+  },
+  "forms": {
+    "placeholder": {
+      "paperKeywords": "例：ブロックチェーン, 学術論文, 分散型"
+    }
+  },
+  "errors": {
+    "generic": "エラーが発生しました"
+  }
+}

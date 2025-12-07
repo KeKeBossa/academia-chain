@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState, useCallback } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
@@ -23,6 +24,7 @@ interface PublishPaperFormProps {
     doi: string;
     accessType: 'open' | 'restricted';
     fileName: string;
+    pdfFile?: File;
   }) => Promise<void>;
 }
 
@@ -46,8 +48,10 @@ const CATEGORIES = [
  * Repository から分割して独立化
  */
 export function PublishPaperForm({ isOpen, onClose, onPublish }: PublishPaperFormProps) {
+  const { t } = useTranslation();
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     authors: '',
@@ -78,6 +82,7 @@ export function PublishPaperForm({ isOpen, onClose, onPublish }: PublishPaperFor
         toast.error('ファイルサイズは50MB以下にしてください');
         return;
       }
+      setPdfFile(file);
       handleInputChange('fileName', file.name);
       toast.success(`${file.name} を選択しました`);
     }
@@ -134,7 +139,7 @@ export function PublishPaperForm({ isOpen, onClose, onPublish }: PublishPaperFor
 
     setIsSubmitting(true);
     try {
-      await onPublish(formData);
+      await onPublish({ ...formData, pdfFile: pdfFile || undefined });
       
       // フォームリセット
       setFormData({
@@ -149,6 +154,7 @@ export function PublishPaperForm({ isOpen, onClose, onPublish }: PublishPaperFor
         accessType: 'open',
         fileName: '',
       });
+      setPdfFile(null);
       setUploadProgress(0);
       onClose();
     } catch (error) {
@@ -157,7 +163,7 @@ export function PublishPaperForm({ isOpen, onClose, onPublish }: PublishPaperFor
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, validateForm, onPublish, onClose]);
+  }, [formData, validateForm, onPublish, onClose, pdfFile]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

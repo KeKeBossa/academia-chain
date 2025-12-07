@@ -1,27 +1,79 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { TrendingUp, FileText, Users, Briefcase, Calendar, ExternalLink, Heart, MessageSquare, Share2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Avatar, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
-import { usePapers, useEvents } from '../hooks/useData';
+import { usePapers, useEvents, useSeminars, useProjects, calculateVotingPower } from '../hooks/useData';
 import { Skeleton } from './ui/skeleton';
 
-export function Dashboard() {
+interface DashboardProps {
+  onNavigateToPaper?: (paperId: string) => void;
+  onNavigateToRepository?: () => void;
+}
+
+export function Dashboard({ onNavigateToPaper, onNavigateToRepository }: DashboardProps) {
+  const { t } = useTranslation();
   const { papers: recentPapers, loading: loadingPapers } = usePapers();
   const { events: upcomingEvents, loading: loadingEvents } = useEvents();
+  const { seminars, loading: loadingSeminars } = useSeminars();
+  const { projects, loading: loadingProjects } = useProjects();
 
-  // stats をメモ化：recentPapers が変わるときだけ再計算
+  // 投票権を計算
+  const votingPower = useMemo(() => {
+    const power = calculateVotingPower();
+    return Math.round(power * 10) / 10; // 1小数点まで丸める
+  }, []);
+
+  // stats をメモ化：実数値から動的に計算
   const stats = useMemo(() => {
-    const totalMembers = 3; // TODO: fetch from useProjects or useSeminars
-    const activeProjects = 2; // TODO: fetch from useProjects
+    // 論文数
+    const paperCount = recentPapers.length;
+    
+    // ゼミ・研究室数
+    const seminarCount = seminars.length;
+    
+    // プロジェクト数
+    const projectCount = projects.length;
+    
+    // 先月との比較（簡略版：今月は0増加と仮定）
+    const paperChange = 0;
+    const seminarChange = 1;
+    const projectChange = 0;
+    const votingChange = 0;
+
     return [
-      { label: '公開論文', value: recentPapers.length.toString(), icon: FileText, change: `+${Math.max(0, recentPapers.length - 1)} 今月`, color: 'blue' },
-      { label: '参加ゼミ', value: totalMembers.toString(), icon: Users, change: '+1 今学期', color: 'purple' },
-      { label: '共同研究', value: activeProjects.toString(), icon: Briefcase, change: '2 進行中', color: 'green' },
-      { label: 'DAOトークン', value: '850', icon: TrendingUp, change: '+50 今週', color: 'orange' },
+      { 
+        label: t('dashboard.publishedPapers'), 
+        value: paperCount.toString(), 
+        icon: FileText, 
+        change: `+${paperChange} ${t('dashboard.thisMonth')}`, 
+        color: 'blue' 
+      },
+      { 
+        label: t('seminars.title'), 
+        value: seminarCount.toString(), 
+        icon: Users, 
+        change: `+${seminarChange} 今学期`, 
+        color: 'purple' 
+      },
+      { 
+        label: t('projects.title'), 
+        value: projectCount.toString(), 
+        icon: Briefcase, 
+        change: `${projectChange} 進行中`, 
+        color: 'green' 
+      },
+      { 
+        label: t('governance.title'), 
+        value: votingPower.toFixed(0), 
+        icon: TrendingUp, 
+        change: `+${votingChange} 今週`, 
+        color: 'orange' 
+      },
     ];
-  }, [recentPapers.length]);
+  }, [recentPapers.length, seminars.length, projects.length, votingPower, t]);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -58,8 +110,8 @@ export function Dashboard() {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>最新の研究論文</CardTitle>
-              <CardDescription>コミュニティで公開された最新の研究成果</CardDescription>
+              <CardTitle>{t('dashboard.latestPapers')}</CardTitle>
+              <CardDescription>{t('dashboard.latestPapers')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {loadingPapers ? (
@@ -69,10 +121,10 @@ export function Dashboard() {
                   ))}
                 </>
               ) : recentPapers.length === 0 ? (
-                <p className="text-center text-gray-500 py-8">論文がまだ登録されていません</p>
+                <p className="text-center text-gray-500 py-8">{t('dashboard.noPapersRegistered')}</p>
               ) : (
                 recentPapers.slice(0, 3).map((paper) => (
-                  <div key={paper.id} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-sm transition-shadow">
+                  <div key={paper.id} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-sm transition-shadow cursor-pointer">
                     <div className="flex items-start gap-3">
                       <Avatar className="mt-1">
                         <AvatarFallback>{paper.author.charAt(0)}</AvatarFallback>
@@ -101,19 +153,24 @@ export function Dashboard() {
                           ))}
                         </div>
                         <div className="flex items-center gap-4 text-sm text-gray-600">
-                          <button className="flex items-center gap-1 hover:text-red-600 transition-colors">
-                            <Heart className="w-4 h-4" />
+                          <div className="flex items-center gap-1">
+                            <Heart className="w-4 h-4 text-gray-600" />
                             <span>{paper.likes}</span>
-                          </button>
-                          <button className="flex items-center gap-1 hover:text-blue-600 transition-colors">
-                            <MessageSquare className="w-4 h-4" />
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <MessageSquare className="w-4 h-4 text-gray-600" />
                             <span>{paper.comments}</span>
-                          </button>
+                          </div>
                           <button className="flex items-center gap-1 hover:text-green-600 transition-colors">
                             <Share2 className="w-4 h-4" />
                             <span>共有</span>
                           </button>
-                          <Button variant="link" className="ml-auto" size="sm">
+                          <Button 
+                            variant="link" 
+                            className="ml-auto" 
+                            size="sm"
+                            onClick={() => onNavigateToPaper?.(paper.id)}
+                          >
                             詳細を見る
                             <ExternalLink className="w-3 h-3 ml-1" />
                           </Button>
@@ -124,8 +181,12 @@ export function Dashboard() {
                 ))
               )}
 
-              <Button variant="outline" className="w-full">
-                すべての論文を見る
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={onNavigateToRepository}
+              >
+                {t('dashboard.viewAllPapers')}
               </Button>
             </CardContent>
           </Card>

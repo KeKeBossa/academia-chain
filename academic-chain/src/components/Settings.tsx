@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Settings as SettingsIcon, Wallet, Bell, Shield, Globe, Database, Monitor, ChevronRight, Check, Mail, Lock, Eye, EyeOff, Download, Trash2, LogOut, Key, Smartphone } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
@@ -12,6 +13,7 @@ import { Separator } from './ui/separator';
 import { createToastHandler, createAsyncToastHandler, createToggleToastHandler } from '../utils/toast';
 
 export function Settings() {
+  const { t } = useTranslation();
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [proposalNotifications, setProposalNotifications] = useState(true);
   const [projectUpdateNotifications, setProjectUpdateNotifications] = useState(true);
@@ -94,7 +96,7 @@ export function Settings() {
                     <Wallet className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <div className="text-sm text-blue-900 mb-1">分散ID (DID)</div>
+                    <div className="text-sm text-blue-900 mb-1">ID</div>
                     <div className="text-xs text-blue-700 font-mono">{connectedWallet}</div>
                   </div>
                 </div>

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Users, MapPin, Calendar, TrendingUp, MessageSquare, UserPlus, ExternalLink, Plus, Shield, Hash, Globe, Mail, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
@@ -10,10 +11,13 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Combobox } from './ui/combobox';
 import { Checkbox } from './ui/checkbox';
 import { Skeleton } from './ui/skeleton';
 import { toast } from 'sonner';
 import { useSeminars } from '../hooks/useData';
+import { UNIVERSITY_NAMES, getDepartmentsByUniversity } from '../data/universities';
+import { ACADEMIC_LEVELS } from '../data/academic-levels';
 import {
   SEMINAR_FORM_DEFAULTS,
   validateSeminarForm,
@@ -43,7 +47,9 @@ interface Seminar {
 }
 
 export function Seminars() {
+  const { t } = useTranslation();
   const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState(false);
+  const [isReputationInfoOpen, setIsReputationInfoOpen] = useState(false);
   const [newSeminar, setNewSeminar] = useState({
     name: '',
     university: '',
@@ -214,7 +220,7 @@ export function Seminars() {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {seminars.map((seminar) => (
-              <Card key={seminar.id} className="hover:shadow-lg transition-shadow">
+              <Card key={seminar.id} className="hover:shadow-lg transition-shadow cursor-pointer">
                 <CardHeader>
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-start gap-3">
@@ -365,22 +371,22 @@ export function Seminars() {
           <DialogHeader>
             <DialogTitle>研究室を登録</DialogTitle>
             <DialogDescription>
-              ブロックチェーンベースの分散ID（DID）を使用して研究室を登録します。
+              ブロックチェーンベースのID（DID）を使用して研究室を登録します。
               全国の研究者との交流と共同研究の機会が広がります。
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6 py-4">
-            {/* DID Notice */}
+            {/* ID Notice */}
             <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Shield className="w-5 h-5 text-white" />
+                  <Hash className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <div className="text-sm text-purple-900 mb-2">分散ID（DID）による認証</div>
+                  <div className="text-sm text-purple-900 mb-2">ID（DID）による認証</div>
                   <div className="text-xs text-purple-700 space-y-1">
-                    <div>✓ 研究室の信頼性を証明する固有のDIDが発行されます</div>
+                    <div>✓ 研究室の信頼性を証明する固有のIDが発行されます</div>
                     <div>✓ ブロックチェーンで改ざん不可能な記録として保存</div>
                     <div>✓ 他大学との共同研究履歴が透明に管理されます</div>
                     <div>✓ レピュテーションスコアで研究活動が評価されます</div>
@@ -408,20 +414,41 @@ export function Seminars() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="university">大学名 *</Label>
-                <Input
-                  id="university"
-                  value={newSeminar.university}
-                  onChange={(e) => setNewSeminar({ ...newSeminar, university: e.target.value })}
-                  placeholder="東京大学"
-                />
+                <Select value={newSeminar.university} onValueChange={(value: string) => {
+                  setNewSeminar({ ...newSeminar, university: value, department: '' });
+                }}>
+                  <SelectTrigger id="university">
+                    <SelectValue placeholder="大学を選択..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {UNIVERSITY_NAMES.map((name) => (
+                      <SelectItem key={name} value={name}>
+                        {name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="department">学部・研究科 *</Label>
-                <Input
-                  id="department"
+                <Combobox
+                  options={newSeminar.university 
+                    ? getDepartmentsByUniversity(newSeminar.university).map(dept => ({
+                        label: dept.name,
+                        value: dept.name
+                      }))
+                    : []
+                  }
                   value={newSeminar.department}
-                  onChange={(e) => setNewSeminar({ ...newSeminar, department: e.target.value })}
-                  placeholder="情報理工学系研究科"
+                  onValueChange={(value: string) => {
+                    setNewSeminar({ ...newSeminar, department: value });
+                  }}
+                  onCustomValue={(customValue: string) => {
+                    setNewSeminar({ ...newSeminar, department: customValue });
+                  }}
+                  placeholder={newSeminar.university ? '学部を選択または入力...' : '大学を先に選択してください'}
+                  searchPlaceholder="学部・研究科を検索..."
+                  allowCustom={true}
                 />
               </div>
             </div>
@@ -554,9 +581,9 @@ export function Seminars() {
             {/* Info Box */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
               <div className="flex items-center gap-2 text-sm">
-                <Shield className="w-4 h-4 text-blue-600" />
+                <Hash className="w-4 h-4 text-blue-600" />
                 <span className="text-blue-900">
-                  分散ID（DID）が自動的に発行されます
+                  ID（DID）が自動的に発行されます
                 </span>
               </div>
               <div className="flex items-center gap-2 text-sm">
