@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { useState, useCallback } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
@@ -48,7 +47,6 @@ const CATEGORIES = [
  * Repository から分割して独立化
  */
 export function PublishPaperForm({ isOpen, onClose, onPublish }: PublishPaperFormProps) {
-  const { t } = useTranslation();
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pdfFile, setPdfFile] = useState<File | null>(null);

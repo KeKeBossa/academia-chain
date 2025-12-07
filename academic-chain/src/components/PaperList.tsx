@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { useCallback, useMemo } from 'react';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
@@ -19,7 +18,6 @@ interface PaperListProps {
  * Repository から分割して独立化
  */
 export function PaperList({ papers, onLike, onDownload, onNavigateToPaper }: PaperListProps) {
-  const { t } = useTranslation();
   // メモ化：各論文を再計算しない
   const memoizedPapers = useMemo(() => papers, [papers]);
 
