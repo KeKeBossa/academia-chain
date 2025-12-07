@@ -14,6 +14,15 @@ import { Checkbox } from './ui/checkbox';
 import { Skeleton } from './ui/skeleton';
 import { toast } from 'sonner';
 import { useSeminars } from '../hooks/useData';
+import {
+  SEMINAR_FORM_DEFAULTS,
+  validateSeminarForm,
+  generateDIDAddress,
+  generateBlockchainHash,
+  parseTags,
+  getResearchFields,
+} from '../utils/forms';
+import { calculateSeminarStats } from '../utils/stats';
 
 interface Seminar {
   id: string;
@@ -65,94 +74,13 @@ export function Seminars() {
     }));
   });
 
-  const researchFields = [
-    '量子情報科学',
-    '情報学',
-    'コンピュータサイエンス',
-    'エネルギー工学',
-    '情報システム',
-    '生命科学',
-    '都市工学',
-    'バイオテクノロジー',
-    '材料科学',
-    '医療・ヘルスケア',
-    '環境科学',
-    '数学',
-    '物理学',
-    '化学',
-    '機械工学',
-    '電気電子工学',
-    '経済学',
-    '社会学',
-    'その他',
-  ];
-
-  const generateDIDAddress = () => {
-    return 'did:ethr:0x' + Array.from({ length: 40 }, () => 
-      Math.floor(Math.random() * 16).toString(16)
-    ).join('');
-  };
-
-  const generateBlockchainHash = () => {
-    return '0x' + Array.from({ length: 64 }, () => 
-      Math.floor(Math.random() * 16).toString(16)
-    ).join('');
-  };
+  const researchFields = getResearchFields();
 
   const handleRegisterSeminar = () => {
-    // Validation
-    if (!newSeminar.name.trim()) {
-      toast.error('研究室名を入力してください');
-      return;
-    }
-    if (newSeminar.name.length < 5) {
-      toast.error('研究室名は5文字以上で入力してください');
-      return;
-    }
-    if (!newSeminar.university.trim()) {
-      toast.error('大学名を入力してください');
-      return;
-    }
-    if (!newSeminar.department.trim()) {
-      toast.error('学部・研究科を入力してください');
-      return;
-    }
-    if (!newSeminar.professor.trim()) {
-      toast.error('指導教員名を入力してください');
-      return;
-    }
-    if (!newSeminar.field) {
-      toast.error('研究分野を選択してください');
-      return;
-    }
-    if (!newSeminar.description.trim()) {
-      toast.error('研究室紹介文を入力してください');
-      return;
-    }
-    if (newSeminar.description.length < 50) {
-      toast.error('研究室紹介文は50文字以上で入力してください');
-      return;
-    }
-
-    const members = parseInt(newSeminar.members);
-    if (isNaN(members) || members < 1 || members > 200) {
-      toast.error('メンバー数は1〜200の範囲で入力してください');
-      return;
-    }
-
-    if (!newSeminar.tags.trim()) {
-      toast.error('研究キーワードを入力してください（カンマ区切りで1つ以上）');
-      return;
-    }
-
-    // Optional field validation
-    if (newSeminar.website && !newSeminar.website.match(/^https?:\/\/.+/)) {
-      toast.error('ウェブサイトURLは http:// または https:// で始まる必要があります');
-      return;
-    }
-
-    if (newSeminar.email && !newSeminar.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-      toast.error('有効なメールアドレスを入力してください');
+    // Validate form
+    const validation = validateSeminarForm(newSeminar);
+    if (!validation.isValid) {
+      toast.error(validation.error);
       return;
     }
 
@@ -161,12 +89,10 @@ export function Seminars() {
     const txHash = generateBlockchainHash();
 
     // Parse tags
-    const tagsList = newSeminar.tags
-      .split(',')
-      .map(t => t.trim())
-      .filter(t => t.length > 0);
+    const tagsList = parseTags(newSeminar.tags);
 
     // Create new seminar
+    const members = parseInt(newSeminar.members);
     const seminar: Seminar = {
       id: String(seminars.length + 1),
       name: newSeminar.name.trim(),
@@ -243,25 +169,25 @@ export function Seminars() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl mb-1">127</div>
+            <div className="text-2xl mb-1">{seminars.length}</div>
             <p className="text-gray-600 text-sm">登録研究室</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl mb-1">1,248</div>
+            <div className="text-2xl mb-1">{seminars.reduce((acc, s) => acc + s.members, 0)}</div>
             <p className="text-gray-600 text-sm">総メンバー数</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl mb-1">45</div>
+            <div className="text-2xl mb-1">{new Set(seminars.map(s => s.university)).size}</div>
             <p className="text-gray-600 text-sm">大学</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl mb-1">89</div>
+            <div className="text-2xl mb-1">{seminars.reduce((acc, s) => acc + s.activeProjects, 0)}</div>
             <p className="text-gray-600 text-sm">共同研究進行中</p>
           </CardContent>
         </Card>
@@ -277,8 +203,17 @@ export function Seminars() {
         </TabsList>
 
         <TabsContent value="all" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {seminars.map((seminar) => (
+          {seminars.length === 0 ? (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 mb-2">登録されている研究室がありません</p>
+                <p className="text-gray-500 text-sm">研究室を登録して、共同研究の機会を広げましょう</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {seminars.map((seminar) => (
               <Card key={seminar.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex items-start justify-between mb-2">
@@ -349,8 +284,9 @@ export function Seminars() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="joined">
@@ -364,8 +300,17 @@ export function Seminars() {
         </TabsContent>
 
         <TabsContent value="open">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {seminars.filter(s => s.openForCollaboration).map((seminar) => (
+          {seminars.filter(s => s.openForCollaboration).length === 0 ? (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 mb-2">共同研究募集中の研究室がありません</p>
+                <p className="text-gray-500 text-sm">他の研究室を探すか、新しい研究室を登録してください</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {seminars.filter(s => s.openForCollaboration).map((seminar) => (
               <Card key={seminar.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex items-start justify-between mb-2">
@@ -396,8 +341,9 @@ export function Seminars() {
                   </Button>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="recommended">

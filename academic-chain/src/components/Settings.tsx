@@ -9,7 +9,7 @@ import { Label } from './ui/label';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Separator } from './ui/separator';
-import { toast } from 'sonner@2.0.3';
+import { createToastHandler, createAsyncToastHandler, createToggleToastHandler } from '../utils/toast';
 
 export function Settings() {
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -30,25 +30,17 @@ export function Settings() {
   const connectedWallet = 'did:ethr:0x1234...5678';
   const emailAddress = 'tanaka@university.ac.jp';
 
-  const handleSaveSettings = () => {
-    toast.success('設定を保存しました');
-  };
-
-  const handleExportData = () => {
-    toast.info('データをエクスポートしています...');
-    setTimeout(() => {
-      toast.success('データのエクスポートが完了しました');
-    }, 2000);
-  };
-
-  const handleEnable2FA = () => {
-    setTwoFactorEnabled(!twoFactorEnabled);
-    if (!twoFactorEnabled) {
-      toast.success('2段階認証を有効化しました');
-    } else {
-      toast.info('2段階認証を無効化しました');
-    }
-  };
+  const handleSaveSettings = createToastHandler('設定を保存しました');
+  const handleExportData = createAsyncToastHandler(
+    'データをエクスポートしています...',
+    'データのエクスポートが完了しました'
+  );
+  const handleEnable2FA = createToggleToastHandler(
+    '2段階認証を有効化しました',
+    '2段階認証を無効化しました',
+    () => twoFactorEnabled,
+    setTwoFactorEnabled
+  );
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
