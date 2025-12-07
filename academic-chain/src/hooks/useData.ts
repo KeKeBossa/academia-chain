@@ -1,11 +1,58 @@
 /**
  * Data fetching hooks for academic-chain
  * Fetches data from backend API endpoints backed by Prisma database
+ * Optimized with debouncing, memoization, and caching
  */
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { apiFetch } from '../utils/api';
 import { API_ENDPOINTS } from '../config/api';
+
+// ============================================
+// Cache Management
+// ============================================
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+  ttl: number; // milliseconds
+}
+
+const queryCache = new Map<string, CacheEntry<any>>();
+
+function getCacheKey(endpoint: string, params?: Record<string, any>): string {
+  return `${endpoint}:${JSON.stringify(params || {})}`;
+}
+
+function getFromCache<T>(key: string): T | null {
+  const entry = queryCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > entry.ttl) {
+    queryCache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function setCache<T>(key: string, data: T, ttl = 5 * 60 * 1000): void {
+  queryCache.set(key, { data, timestamp: Date.now(), ttl });
+}
+
+// ============================================
+// Debounce Utility
+// ============================================
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 // ============================================
 // Types (aligned with Prisma schema)
@@ -83,13 +130,19 @@ export interface Seminar {
 }
 
 // ============================================
-// Fetch Functions (Simplified)
+// Fetch Functions (Optimized with Cache)
 // ============================================
 
 export async function fetchResearchPapers(
   query?: string,
   filters?: { category?: string; university?: string; dateRange?: string }
 ): Promise<ResearchPaper[]> {
+  const cacheKey = getCacheKey(API_ENDPOINTS.PAPERS, { query, ...filters });
+  
+  // Check cache first
+  const cached = getFromCache<ResearchPaper[]>(cacheKey);
+  if (cached) return cached;
+  
   const data = await apiFetch<{ assets: ResearchPaper[] }>(API_ENDPOINTS.PAPERS, {
     params: {
       ...(query && { q: query }),
@@ -98,35 +151,70 @@ export async function fetchResearchPapers(
       ...(filters?.dateRange && { dateRange: filters.dateRange }),
     },
   });
-  return data?.assets || [];
+  
+  const result = data?.assets || [];
+  setCache(cacheKey, result);
+  return result;
 }
 
 export async function fetchNotifications(userId: string, unreadOnly = false): Promise<Notification[]> {
+  const cacheKey = getCacheKey(API_ENDPOINTS.NOTIFICATIONS, { userId, unreadOnly });
+  
+  const cached = getFromCache<Notification[]>(cacheKey);
+  if (cached) return cached;
+  
   const data = await apiFetch<{ notifications: Notification[] }>(API_ENDPOINTS.NOTIFICATIONS, {
     params: { userId, ...(unreadOnly && { unreadOnly: 'true' }) },
   });
-  return data?.notifications || [];
+  
+  const result = data?.notifications || [];
+  setCache(cacheKey, result);
+  return result;
 }
 
 export async function fetchUpcomingEvents(): Promise<Event[]> {
+  const cacheKey = getCacheKey(API_ENDPOINTS.EVENTS);
+  
+  const cached = getFromCache<Event[]>(cacheKey);
+  if (cached) return cached;
+  
   const data = await apiFetch<{ events: Event[] }>(API_ENDPOINTS.EVENTS);
-  return data?.events || [];
+  
+  const result = data?.events || [];
+  setCache(cacheKey, result);
+  return result;
 }
 
 export async function fetchProjects(daoId?: string): Promise<Project[]> {
+  const cacheKey = getCacheKey(API_ENDPOINTS.PROJECTS, { daoId });
+  
+  const cached = getFromCache<Project[]>(cacheKey);
+  if (cached) return cached;
+  
   const data = await apiFetch<{ collaborations: Project[] }>(API_ENDPOINTS.PROJECTS, {
     params: { ...(daoId && { daoId }) },
   });
-  return data?.collaborations || [];
+  
+  const result = data?.collaborations || [];
+  setCache(cacheKey, result);
+  return result;
 }
 
 export async function fetchSeminars(): Promise<Seminar[]> {
+  const cacheKey = getCacheKey(API_ENDPOINTS.SEMINARS);
+  
+  const cached = getFromCache<Seminar[]>(cacheKey);
+  if (cached) return cached;
+  
   const data = await apiFetch<{ seminars: Seminar[] }>(API_ENDPOINTS.SEMINARS);
-  return data?.seminars || [];
+  
+  const result = data?.seminars || [];
+  setCache(cacheKey, result);
+  return result;
 }
 
 // ============================================
-// React Hooks
+// React Hooks (Optimized with Debounce)
 // ============================================
 
 export function usePapers(
@@ -136,15 +224,18 @@ export function usePapers(
   const [papers, setPapers] = useState<ResearchPaper[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Debounce search query (300ms delay)
+  const debouncedQuery = useDebounce(query, 300);
+  const debouncedFilters = useDebounce(filters, 300);
 
   useEffect(() => {
     setLoading(true);
-    fetchResearchPapers(query, filters)
+    fetchResearchPapers(debouncedQuery, debouncedFilters)
       .then(setPapers)
       .catch((err) => setError((err as Error)?.message || 'Unknown error'))
       .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
+  }, [debouncedQuery, debouncedFilters]);
 
   return { papers, loading, error };
 }
@@ -160,8 +251,7 @@ export function useNotifications(userId: string, unreadOnly = false) {
       .then(setNotifications)
       .catch((err) => setError((err as Error)?.message || 'Unknown error'))
       .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [userId, unreadOnly]);
 
   return { notifications, loading, error };
 }
@@ -193,7 +283,6 @@ export function useProjects(daoId?: string) {
       .then(setProjects)
       .catch((err) => setError((err as Error)?.message || 'Unknown error'))
       .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [daoId]);
 
   return { projects, loading, error };

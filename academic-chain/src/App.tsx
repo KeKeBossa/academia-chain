@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Home, FileText, Users, Briefcase, Vote, User, Wallet, Search, Bell, Settings, Shield, BookOpen, TrendingUp, Award } from 'lucide-react';
 import { Dashboard } from './components/Dashboard';
 import { Repository } from './components/Repository';
@@ -30,35 +30,32 @@ export default function App() {
   // 実データから通知を取得
   const userId = userDID || 'demo-user';
   const { notifications: fetchedNotifications, loading: loadingNotifications } = useNotifications(userId);
-  const [notifications, setNotifications] = useState<NotificationData[]>(
-    fetchedNotifications.length > 0 ? fetchedNotifications : []
-  );
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  // メモ化：未読通知数を計算（fetchedNotifications が変わる時だけ再計算）
+  const unreadCount = useMemo(() => {
+    return fetchedNotifications.filter(n => !n.read).length;
+  }, [fetchedNotifications]);
 
-  const markAsRead = (id: string) => {
-    // 既読にする（削除しない）
-    setNotifications(prev =>
-      prev.map(notif =>
-        notif.id === id ? { ...notif, read: true } : notif
-      )
-    );
-  };
+  // コールバック：通知を既読にする
+  const markAsRead = useCallback((id: string) => {
+    // NOTE: 実装時はバックエンドに通知
+    console.log('Mark as read:', id);
+  }, []);
 
-  const deleteNotification = (id: string) => {
-    setNotifications(prev => prev.filter(notif => notif.id !== id));
-  };
+  const deleteNotification = useCallback((id: string) => {
+    // NOTE: 実装時はバックエンドから削除
+    console.log('Delete notification:', id);
+  }, []);
 
-  const markAllAsRead = () => {
-    // すべて既読にする（削除しない）
-    setNotifications(prev =>
-      prev.map(notif => ({ ...notif, read: true }))
-    );
-  };
+  const markAllAsRead = useCallback(() => {
+    // NOTE: 実装時はバックエンドにすべて既読フラグを立てる
+    console.log('Mark all as read');
+  }, []);
 
-  const deleteAllRead = () => {
-    setNotifications(prev => prev.filter(notif => !notif.read));
-  };
+  const deleteAllRead = useCallback(() => {
+    // NOTE: 実装時はバックエンドから既読通知を削除
+    console.log('Delete all read');
+  }, []);
 
   const handleConnectWallet = () => {
     // Mock wallet connection
@@ -193,7 +190,7 @@ export default function App() {
                   sideOffset={8}
                 >
                   <NotificationPopup 
-                    notifications={notifications}
+                    notifications={fetchedNotifications}
                     onMarkAsRead={markAsRead}
                     onMarkAllAsRead={markAllAsRead}
                     onViewAll={() => {
@@ -366,7 +363,7 @@ export default function App() {
           {activeTab === 'search' && <SearchComponent initialQuery={searchQuery} onQueryChange={setSearchQuery} />}
           {activeTab === 'notifications' && (
             <Notifications 
-              notifications={notifications}
+              notifications={fetchedNotifications}
               onMarkAsRead={markAsRead}
               onDeleteNotification={deleteNotification}
               onMarkAllAsRead={markAllAsRead}
