@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Users, MapPin, Calendar, TrendingUp, MessageSquare, UserPlus, ExternalLink, Plus, Shield, Hash, Globe, Mail, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
@@ -47,7 +46,6 @@ interface Seminar {
 }
 
 export function Seminars() {
-  const { t } = useTranslation();
   const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState(false);
   const [isReputationInfoOpen, setIsReputationInfoOpen] = useState(false);
   const [newSeminar, setNewSeminar] = useState({

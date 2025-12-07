@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Plus, Users, Calendar, Clock, CheckCircle2, AlertCircle, TrendingUp, FileText, MessageSquare, Hash, Link, Shield } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
@@ -35,7 +34,6 @@ interface Project {
 }
 
 export function Projects() {
-  const { t } = useTranslation();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newProject, setNewProject] = useState({
     title: '',
