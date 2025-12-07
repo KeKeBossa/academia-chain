@@ -156,7 +156,7 @@ export function Notifications({
           filteredNotifications.map((notification) => (
             <Card
               key={notification.id}
-              className={`transition-all hover:shadow-md ${
+              className={`transition-shadow hover:shadow-md ${
                 !notification.read ? 'border-l-4 border-l-blue-600' : ''
               }`}
             >

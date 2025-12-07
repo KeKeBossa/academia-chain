@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { TrendingUp, FileText, Users, Briefcase, Calendar, ExternalLink, Heart, MessageSquare, Share2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -10,12 +11,13 @@ export function Dashboard() {
   const { papers: recentPapers, loading: loadingPapers } = usePapers();
   const { events: upcomingEvents, loading: loadingEvents } = useEvents();
 
-  const stats = [
+  // stats をメモ化：recentPapers が変わるときだけ再計算
+  const stats = useMemo(() => [
     { label: '公開論文', value: recentPapers.length.toString(), icon: FileText, change: '+2 今月', color: 'blue' },
     { label: '参加ゼミ', value: '3', icon: Users, change: '+1 今学期', color: 'purple' },
     { label: '共同研究', value: '5', icon: Briefcase, change: '2 進行中', color: 'green' },
     { label: 'DAOトークン', value: '850', icon: TrendingUp, change: '+50 今週', color: 'orange' },
-  ];
+  ], [recentPapers.length]);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -66,7 +68,7 @@ export function Dashboard() {
                 <p className="text-center text-gray-500 py-8">論文がまだ登録されていません</p>
               ) : (
                 recentPapers.slice(0, 3).map((paper) => (
-                  <div key={paper.id} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-sm transition-all">
+                  <div key={paper.id} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-sm transition-shadow">
                     <div className="flex items-start gap-3">
                       <Avatar className="mt-1">
                         <AvatarFallback>{paper.author.charAt(0)}</AvatarFallback>
