@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -32,7 +31,6 @@ interface ProfileSetupProps {
 }
 
 export function ProfileSetup({ onComplete }: ProfileSetupProps) {
-  const { t } = useTranslation();
   const { profile, saveProfile, markProfileCompleted } = useUserProfile();
   const [formData, setFormData] = useState<UserProfile>(
     profile || {

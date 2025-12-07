@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { useCallback, useState, useEffect } from 'react';
 import { ArrowLeft, Heart, MessageSquare, Download, Hash, FileText, Calendar, Award, Share2, ExternalLink, Trash2, Send } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -17,7 +16,6 @@ interface PaperDetailProps {
 }
 
 export function PaperDetail({ paper, onBack, onLike, onDownload, onDelete }: PaperDetailProps) {
-  const { t } = useTranslation();
   // いいね数とダウンロード数の状態をローカルで管理して即座に UI を更新
   const [likes, setLikes] = useState(paper.likes);
   const [downloads, setDownloads] = useState(paper.downloads);
