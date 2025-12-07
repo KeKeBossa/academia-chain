@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Edit, Mail, MapPin, GraduationCap, Award, FileText, Users, Briefcase, ExternalLink, Shield, Hash, X, Plus } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -12,30 +12,44 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { toast } from 'sonner';
-import { usePapers } from '../hooks/useData';
+import { usePapers, useProjects, useSeminars } from '../hooks/useData';
 
 export function Profile() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
-  // 実データから論文を取得
+  // 実データから取得
   const { papers: fetchedPapers, loading: loadingPapers } = usePapers();
+  const { projects: fetchedProjects, loading: loadingProjects } = useProjects();
+  const { seminars: fetchedSeminars, loading: loadingSeminars } = useSeminars();
   
+  // 初期 userProfile を実データベースから構築
   const [userProfile, setUserProfile] = useState({
-    name: '田中 太郎',
-    did: 'did:ethr:0x1234567890abcdef',
-    email: 'tanaka@example.ac.jp',
-    university: '東京大学',
-    department: '情報理工学系研究科',
-    position: '博士課程3年',
-    researchFields: ['量子コンピューティング', '機械学習', 'ブロックチェーン'],
-    bio: '量子コンピューティングと機械学習の融合に興味を持っています。特に量子機械学習アルゴリズムの開発と応用に取り組んでいます。',
-    reputation: 1247,
-    papers: fetchedPapers.length,
-    seminars: 3,
-    projects: 5,
-    daoTokens: 850,
-    joinDate: '2024-04-01',
+    name: 'ユーザー',
+    did: 'did:ethr:0x0000000000000000000000000000000000000000',
+    email: 'user@example.ac.jp',
+    university: '未設定',
+    department: '未設定',
+    position: '研究者',
+    researchFields: [] as string[],
+    bio: 'プロフィールを編集してください',
+    reputation: 0,
+    papers: 0,
+    seminars: 0,
+    projects: 0,
+    daoTokens: 0,
+    joinDate: new Date().toISOString().split('T')[0],
   });
+
+  // useEffect で実データを反映
+  useEffect(() => {
+    setUserProfile(prev => ({
+      ...prev,
+      papers: fetchedPapers.length,
+      seminars: fetchedSeminars.length,
+      projects: fetchedProjects.length,
+      reputation: Math.min(fetchedPapers.length * 100, 5000),
+    }));
+  }, [fetchedPapers.length, fetchedSeminars.length, fetchedProjects.length]);
 
   const [editForm, setEditForm] = useState(userProfile);
   const [newResearchField, setNewResearchField] = useState('');
