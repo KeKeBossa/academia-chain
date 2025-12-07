@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Bell, Vote, FileText, Users, Briefcase, MessageSquare, Award, CheckCircle2, Calendar, ExternalLink, Trash2, MoreVertical, Filter } from 'lucide-react';
 import { Card, CardContent } from './ui/card';
@@ -27,7 +26,6 @@ export function Notifications({
   onMarkAllAsRead,
   onDeleteAllRead
 }: NotificationsProps) {
-  const { t } = useTranslation();
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
   const getNotificationIcon = (type: NotificationType) => {

@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
 import { Search as SearchIcon, Filter, X, Calendar, MapPin, Award, Hash, FileText, Users, Briefcase, Vote, TrendingUp, Download, Heart, MessageSquare, ExternalLink, UserPlus, ThumbsUp } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
@@ -21,7 +20,6 @@ interface SearchProps {
 }
 
 export function Search({ initialQuery = '', onQueryChange }: SearchProps) {
-  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
