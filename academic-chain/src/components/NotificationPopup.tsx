@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { Bell, Vote, FileText, Users, Briefcase, MessageSquare, Award, CheckCircle2, ExternalLink, ArrowRight } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -15,7 +14,6 @@ interface NotificationPopupProps {
 }
 
 export function NotificationPopup({ notifications, onMarkAsRead, onMarkAllAsRead, onViewAll }: NotificationPopupProps) {
-  const { t } = useTranslation();
 
   const getNotificationIcon = (type: NotificationType) => {
     switch (type) {

@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Settings as SettingsIcon, Wallet, Bell, Shield, Globe, Database, Monitor, ChevronRight, Check, Mail, Lock, Eye, EyeOff, Download, Trash2, LogOut, Key, Smartphone } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
@@ -13,7 +12,6 @@ import { Separator } from './ui/separator';
 import { createToastHandler, createAsyncToastHandler, createToggleToastHandler } from '../utils/toast';
 
 export function Settings() {
-  const { t } = useTranslation();
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [proposalNotifications, setProposalNotifications] = useState(true);
   const [projectUpdateNotifications, setProjectUpdateNotifications] = useState(true);
