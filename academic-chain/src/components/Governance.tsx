@@ -11,7 +11,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 type ProposalStatus = 'active' | 'pending' | 'passed' | 'rejected';
 
@@ -42,70 +42,9 @@ export function Governance() {
     votingPeriod: '7',
   });
   const [proposals, setProposals] = useState<Proposal[]>([
-    {
-      id: '1',
-      title: '新しい研究分野カテゴリの追加提案',
-      description: '量子機械学習（Quantum Machine Learning）を新しい研究分野カテゴリとして追加することを提案します。この分野は急速に成長しており、多くの研究者が関心を持っています。',
-      proposer: '山田 花子',
-      proposerUniversity: '東京大学',
-      status: 'active' as ProposalStatus,
-      votesFor: 247,
-      votesAgainst: 38,
-      totalVotes: 285,
-      quorum: 300,
-      endDate: '2025-10-25',
-      createdDate: '2025-10-15',
-      category: 'プラットフォーム改善',
-      requiredTokens: 100,
-    },
-    {
-      id: '2',
-      title: '共同研究助成金の配分基準変更',
-      description: '共同研究プロジェクトへの助成金配分において、参加大学数だけでなく、学際性や社会的インパクトも評価基準に含めることを提案します。',
-      proposer: '佐藤 健',
-      proposerUniversity: '京都大学',
-      status: 'active' as ProposalStatus,
-      votesFor: 189,
-      votesAgainst: 145,
-      totalVotes: 334,
-      quorum: 300,
-      endDate: '2025-10-28',
-      createdDate: '2025-10-18',
-      category: '資金配分',
-      requiredTokens: 500,
-    },
-    {
-      id: '3',
-      title: '査読システムの透明性向上',
-      description: 'ブロックチェーン上で査読プロセスの記録を公開し、査読者の匿名性を保ちつつ透明性を高めるシステムの導入を提案します。',
-      proposer: '鈴木 美咲',
-      proposerUniversity: '慶應義塾大学',
-      status: 'pending' as ProposalStatus,
-      votesFor: 0,
-      votesAgainst: 0,
-      totalVotes: 0,
-      quorum: 300,
-      endDate: '2025-11-05',
-      createdDate: '2025-10-22',
-      category: '査読システム',
-      requiredTokens: 200,
-    },
-    {
-      id: '4',
-      title: 'オープンアクセス論文への報奨制度導入',
-      description: 'オープンアクセスで論文を公開した研究者に対して、DAOトークンによる報奨を与える制度を導入することを提案します。',
-      proposer: '高橋 正',
-      proposerUniversity: '大阪大学',
-      status: 'passed' as ProposalStatus,
-      votesFor: 412,
-      votesAgainst: 67,
-      totalVotes: 479,
-      quorum: 300,
-      endDate: '2025-10-20',
-      createdDate: '2025-10-10',
-      category: 'インセンティブ',
-      requiredTokens: 150,
-    },
+    // NOTE: Mock proposals have been removed.
+    // Real proposals should be fetched from backend API using useProjects() hook
+    // TODO: Integrate with backend to load real proposal data
   ]);
 
   const statusConfig = {
@@ -545,7 +484,7 @@ export function Governance() {
             {/* Category */}
             <div>
               <Label htmlFor="category">カテゴリ *</Label>
-              <Select value={newProposal.category} onValueChange={(value) => setNewProposal({ ...newProposal, category: value })}>
+              <Select value={newProposal.category} onValueChange={(value: string) => setNewProposal({ ...newProposal, category: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="提案のカテゴリを選択" />
                 </SelectTrigger>
