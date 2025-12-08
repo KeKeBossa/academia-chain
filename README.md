@@ -162,7 +162,35 @@ academic-repository/
 2. `npm run lint`, `npm run compile`, `npm run test`, `npm run build` がすべて成功。
 3. `.env.production` に本番 `DATABASE_URL` / `VC_ENCRYPTION_SECRET` / RPC URL を設定。
 4. `npm run verify:staging` で Storacha・コントラクト構成を検証。
-5. CI（`.github/workflows/ci.yml`）のジョブが成功していることを確認。
+5. CI（`.github/workflows/ci-cd.yml`）のジョブが成功していることを確認。
+
+## 本番環境へのデプロイ
+
+詳細な本番環境設定手順は **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** を参照してください。
+
+### クイックスタート
+
+```bash
+# 1. 環境変数テンプレートをコピー
+cp .env.production.example .env.production
+
+# 2. 必要な環境変数を設定 (DATABASE_URL, RPC URLs, API Keys など)
+
+# 3. Vercel へデプロイ
+npm i -g vercel
+vercel --prod
+
+# または GitHub Actions で自動デプロイ
+# main ブランチへプッシュすると自動的にデプロイされます
+```
+
+### デプロイ先オプション
+
+- **Vercel** (推奨) - Next.js 最適化、簡単設定
+- **Railway** - Docker + PostgreSQL 統合
+- **Render** / **Fly.io** - フルスタック対応
+
+詳細は [DEPLOYMENT.md](docs/DEPLOYMENT.md) の手順に従ってください。
 
 ## ロードマップ
 

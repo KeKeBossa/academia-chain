@@ -17,9 +17,10 @@ import { transformForSearch } from '../utils/transformers';
 interface SearchProps {
   initialQuery?: string;
   onQueryChange?: (query: string) => void;
+  onNavigateToPaper?: (paperId: string) => void;
 }
 
-export function Search({ initialQuery = '', onQueryChange }: SearchProps) {
+export function Search({ initialQuery = '', onQueryChange, onNavigateToPaper }: SearchProps) {
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -363,7 +364,10 @@ export function Search({ initialQuery = '', onQueryChange }: SearchProps) {
                                   {paper.comments}
                                 </div>
                               </div>
-                              <Button size="sm">
+                              <Button 
+                                size="sm"
+                                onClick={() => onNavigateToPaper?.(paper.id)}
+                              >
                                 詳細を見る
                                 <ExternalLink className="w-4 h-4 ml-2" />
                               </Button>

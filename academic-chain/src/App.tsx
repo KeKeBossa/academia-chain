@@ -514,7 +514,13 @@ export default function App() {
           {activeTab === 'seminars' && <Seminars />}
           {activeTab === 'projects' && <Projects />}
           {activeTab === 'governance' && <Governance votingPower={votingPower} />}
-          {activeTab === 'search' && <SearchComponent initialQuery={searchQuery} onQueryChange={setSearchQuery} />}
+          {activeTab === 'search' && (
+            <SearchComponent 
+              initialQuery={searchQuery} 
+              onQueryChange={setSearchQuery}
+              onNavigateToPaper={navigateToPaperDetail}
+            />
+          )}
           {activeTab === 'notifications' && (
             <Notifications 
               notifications={fetchedNotifications}

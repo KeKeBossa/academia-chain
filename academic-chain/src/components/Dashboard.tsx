@@ -17,82 +17,59 @@ export function Dashboard({ onNavigateToPaper, onNavigateToRepository }: Dashboa
   const { t } = useTranslation();
   const { papers: recentPapers, loading: loadingPapers } = usePapers();
   const { events: upcomingEvents, loading: loadingEvents } = useEvents();
-  const { seminars, loading: loadingSeminars } = useSeminars();
-  const { projects, loading: loadingProjects } = useProjects();
+  const { seminars } = useSeminars();
+  const { projects } = useProjects();
 
-  // 投票権を計算
-  const votingPower = useMemo(() => {
-    const power = calculateVotingPower();
-    return Math.round(power * 10) / 10; // 1小数点まで丸める
-  }, []);
+  const votingPower = useMemo(() => Math.round(calculateVotingPower() * 10) / 10, []);
 
-  // stats をメモ化：実数値から動的に計算
-  const stats = useMemo(() => {
-    // 論文数
-    const paperCount = recentPapers.length;
-    
-    // ゼミ・研究室数
-    const seminarCount = seminars.length;
-    
-    // プロジェクト数
-    const projectCount = projects.length;
-    
-    // 先月との比較（簡略版：今月は0増加と仮定）
-    const paperChange = 0;
-    const seminarChange = 1;
-    const projectChange = 0;
-    const votingChange = 0;
+  const stats = useMemo(() => [
+    { 
+      label: t('dashboard.publishedPapers'), 
+      value: recentPapers.length, 
+      icon: FileText, 
+      change: `+0 ${t('dashboard.thisMonth')}`, 
+      color: 'blue' as const
+    },
+    { 
+      label: t('seminars.title'), 
+      value: seminars.length, 
+      icon: Users, 
+      change: '+1 今学期', 
+      color: 'purple' as const
+    },
+    { 
+      label: t('projects.title'), 
+      value: projects.length, 
+      icon: Briefcase, 
+      change: '0 進行中', 
+      color: 'green' as const
+    },
+    { 
+      label: t('governance.title'), 
+      value: votingPower.toFixed(0), 
+      icon: TrendingUp, 
+      change: '+0 今週', 
+      color: 'orange' as const
+    },
+  ], [recentPapers.length, seminars.length, projects.length, votingPower, t]);
 
-    return [
-      { 
-        label: t('dashboard.publishedPapers'), 
-        value: paperCount.toString(), 
-        icon: FileText, 
-        change: `+${paperChange} ${t('dashboard.thisMonth')}`, 
-        color: 'blue' 
-      },
-      { 
-        label: t('seminars.title'), 
-        value: seminarCount.toString(), 
-        icon: Users, 
-        change: `+${seminarChange} 今学期`, 
-        color: 'purple' 
-      },
-      { 
-        label: t('projects.title'), 
-        value: projectCount.toString(), 
-        icon: Briefcase, 
-        change: `${projectChange} 進行中`, 
-        color: 'green' 
-      },
-      { 
-        label: t('governance.title'), 
-        value: votingPower.toFixed(0), 
-        icon: TrendingUp, 
-        change: `+${votingChange} 今週`, 
-        color: 'orange' 
-      },
-    ];
-  }, [recentPapers.length, seminars.length, projects.length, votingPower, t]);
+  const colorClasses = {
+    blue: 'bg-blue-50 text-blue-600',
+    purple: 'bg-purple-50 text-purple-600',
+    green: 'bg-green-50 text-green-600',
+    orange: 'bg-orange-50 text-orange-600',
+  };
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
-          const colorClasses = {
-            blue: 'bg-blue-50 text-blue-600',
-            purple: 'bg-purple-50 text-purple-600',
-            green: 'bg-green-50 text-green-600',
-            orange: 'bg-orange-50 text-orange-600',
-          }[stat.color];
-
           return (
             <Card key={index}>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <div className={`w-12 h-12 rounded-xl ${colorClasses} flex items-center justify-center`}>
+                  <div className={`w-12 h-12 rounded-xl ${colorClasses[stat.color]} flex items-center justify-center`}>
                     <Icon className="w-6 h-6" />
                   </div>
                 </div>
@@ -106,7 +83,6 @@ export function Dashboard({ onNavigateToPaper, onNavigateToRepository }: Dashboa
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Papers */}
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>

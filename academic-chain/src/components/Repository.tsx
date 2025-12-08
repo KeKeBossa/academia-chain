@@ -29,6 +29,11 @@ const CATEGORIES = [
   'その他',
 ];
 
+const initialFormState = {
+  title: '', authors: '', university: '', department: '', abstract: '',
+  category: '', tags: '', doi: '', accessType: 'open' as 'open' | 'restricted', fileName: '',
+};
+
 interface RepositoryProps {
   onNavigateToPaper?: (paperId: string) => void;
 }
@@ -41,19 +46,7 @@ export function Repository({ onNavigateToPaper }: RepositoryProps) {
   const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
-  
-  const [newPaper, setNewPaper] = useState({
-    title: '',
-    authors: '',
-    university: '',
-    department: '',
-    abstract: '',
-    category: '',
-    tags: '',
-    doi: '',
-    accessType: 'open' as 'open' | 'restricted',
-    fileName: '',
-  });
+  const [newPaper, setNewPaper] = useState(initialFormState);
 
   const filters = useMemo(() => ({
     category: selectedCategory === 'all' ? undefined : selectedCategory,
@@ -182,18 +175,7 @@ export function Repository({ onNavigateToPaper }: RepositoryProps) {
     setRefreshTrigger(prev => prev + 1);
 
     setIsPublishDialogOpen(false);
-    setNewPaper({
-      title: '',
-      authors: '',
-      university: '',
-      department: '',
-      abstract: '',
-      category: '',
-      tags: '',
-      doi: '',
-      accessType: 'open',
-      fileName: '',
-    });
+    setNewPaper(initialFormState);
     setPdfFile(null);
   }, [validateForm, newPaper, pdfFile]);
 

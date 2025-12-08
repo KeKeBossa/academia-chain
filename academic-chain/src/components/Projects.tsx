@@ -33,104 +33,72 @@ interface Project {
   funding: string;
 }
 
+const researchCategories = [
+  'AI・機械学習', '気候科学・環境', '量子技術', 'ブロックチェーン・Web3',
+  'スマートシティ・IoT', 'バイオテクノロジー', '材料科学', 'エネルギー',
+  '医療・ヘルスケア', '教育工学', 'その他',
+];
+
+const fundingSources = [
+  '科研費', '民間企業', '大学助成金', '自治体委託',
+  'DAO資金', '国際共同研究', '財団助成', '自己資金',
+];
+
+const statusConfig = {
+  active: { label: '進行中', color: 'bg-green-50 text-green-700 border-green-200' },
+  planning: { label: '計画中', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+  completed: { label: '完了', color: 'bg-gray-50 text-gray-700 border-gray-200' },
+};
+
+const initialFormState = {
+  title: '', description: '', category: '', startDate: '', endDate: '',
+  universities: '', funding: '', expectedMembers: '5', tags: '',
+};
+
+const getStoredProjects = (): Project[] => {
+  try {
+    const stored = localStorage.getItem('academic-chain:projects');
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.warn('Failed to parse projects from localStorage:', error);
+    return [];
+  }
+};
+
 export function Projects() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [newProject, setNewProject] = useState({
-    title: '',
-    description: '',
-    category: '',
-    startDate: '',
-    endDate: '',
-    universities: '',
-    funding: '',
-    expectedMembers: '5',
-    tags: '',
-  });
-  
-  // 実データからプロジェクトを取得
+  const [newProject, setNewProject] = useState(initialFormState);
   const { projects: fetchedProjects, loading: loadingProjects } = useProjects();
-  
-  // localStorage からプロジェクトを取得
-  const getStoredProjects = (): Project[] => {
-    try {
-      const stored = localStorage.getItem('academic-chain:projects');
-      return stored ? JSON.parse(stored) : [];
-    } catch (error) {
-      console.warn('Failed to parse projects from localStorage:', error);
-      return [];
-    }
-  };
-
   const [projects, setProjects] = useState<Project[]>(getStoredProjects());
-
-  const researchCategories = [
-    'AI・機械学習',
-    '気候科学・環境',
-    '量子技術',
-    'ブロックチェーン・Web3',
-    'スマートシティ・IoT',
-    'バイオテクノロジー',
-    '材料科学',
-    'エネルギー',
-    '医療・ヘルスケア',
-    '教育工学',
-    'その他',
-  ];
-
-  const fundingSources = [
-    '科研費',
-    '民間企業',
-    '大学助成金',
-    '自治体委託',
-    'DAO資金',
-    '国際共同研究',
-    '財団助成',
-    '自己資金',
-  ];
 
   const myDAOTokens = 1250;
 
-  const generateBlockchainHash = () => {
-    return '0x' + Array.from({ length: 64 }, () => 
-      Math.floor(Math.random() * 16).toString(16)
-    ).join('');
-  };
+  const generateBlockchainHash = () => 
+    '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
 
-  const generateIPFSHash = () => {
-    return 'Qm' + Array.from({ length: 44 }, () => 
-      'abcdefghijklmnopqrstuvwxyz0123456789'.charAt(Math.floor(Math.random() * 36))
-    ).join('');
-  };
+  const generateIPFSHash = () => 
+    'Qm' + Array.from({ length: 44 }, () => 'abcdefghijklmnopqrstuvwxyz0123456789'.charAt(Math.floor(Math.random() * 36))).join('');
 
   const handleCreateProject = () => {
     // Validation
-    if (!newProject.title.trim()) {
-      toast.error('プロジェクトタイトルを入力してください');
-      return;
-    }
-    if (newProject.title.length < 10) {
-      toast.error('プロジェクトタイトルは10文字以上で入力してください');
-      return;
-    }
-    if (!newProject.description.trim()) {
-      toast.error('プロジェクト説明を入力してください');
-      return;
-    }
-    if (newProject.description.length < 30) {
-      toast.error('プロジェクト説明は30文字以上で入力してください');
-      return;
-    }
-    if (!newProject.category) {
-      toast.error('研究分野を選択してください');
-      return;
-    }
-    if (!newProject.startDate) {
-      toast.error('開始日を選択してください');
-      return;
-    }
-    if (!newProject.endDate) {
-      toast.error('終了日を選択してください');
-      return;
+    const validations = [
+      { condition: !newProject.title.trim(), message: 'プロジェクトタイトルを入力してください' },
+      { condition: newProject.title.length < 10, message: 'プロジェクトタイトルは10文字以上で入力してください' },
+      { condition: !newProject.description.trim(), message: 'プロジェクト説明を入力してください' },
+      { condition: newProject.description.length < 30, message: 'プロジェクト説明は30文字以上で入力してください' },
+      { condition: !newProject.category, message: '研究分野を選択してください' },
+      { condition: !newProject.startDate, message: '開始日を選択してください' },
+      { condition: !newProject.endDate, message: '終了日を選択してください' },
+      { condition: !newProject.universities.trim(), message: '参加予定大学を入力してください' },
+      { condition: !newProject.funding, message: '資金源を選択してください' },
+      { condition: !newProject.tags.trim(), message: 'タグを入力してください（カンマ区切りで1つ以上）' },
+    ];
+
+    for (const { condition, message } of validations) {
+      if (condition) {
+        toast.error(message);
+        return;
+      }
     }
 
     const start = new Date(newProject.startDate);
@@ -140,23 +108,9 @@ export function Projects() {
       return;
     }
 
-    if (!newProject.universities.trim()) {
-      toast.error('参加予定大学を入力してください');
-      return;
-    }
-    if (!newProject.funding) {
-      toast.error('資金源を選択してください');
-      return;
-    }
-
     const expectedMembers = parseInt(newProject.expectedMembers);
     if (isNaN(expectedMembers) || expectedMembers < 2 || expectedMembers > 100) {
       toast.error('予定メンバー数は2〜100の範囲で入力してください');
-      return;
-    }
-
-    if (!newProject.tags.trim()) {
-      toast.error('タグを入力してください（カンマ区切りで1つ以上）');
       return;
     }
 
@@ -165,16 +119,6 @@ export function Projects() {
     const ipfsHash = generateIPFSHash();
 
     // Create new project
-    const universitiesList = newProject.universities
-      .split(',')
-      .map(u => u.trim())
-      .filter(u => u.length > 0);
-
-    const tagsList = newProject.tags
-      .split(',')
-      .map(t => t.trim())
-      .filter(t => t.length > 0);
-
     const project: Project = {
       id: String(projects.length + 1),
       title: newProject.title.trim(),
@@ -183,31 +127,19 @@ export function Projects() {
       progress: 0,
       startDate: newProject.startDate,
       endDate: newProject.endDate,
-      universities: universitiesList,
+      universities: newProject.universities.split(',').map(u => u.trim()).filter(u => u.length > 0),
       members: expectedMembers,
       tasks: { total: 0, completed: 0 },
       papers: 0,
       meetings: 0,
-      tags: tagsList,
+      tags: newProject.tags.split(',').map(t => t.trim()).filter(t => t.length > 0),
       leader: '田中 太郎',
       funding: newProject.funding,
     };
 
     setProjects([project, ...projects]);
     setIsCreateDialogOpen(false);
-
-    // Reset form
-    setNewProject({
-      title: '',
-      description: '',
-      category: '',
-      startDate: '',
-      endDate: '',
-      universities: '',
-      funding: '',
-      expectedMembers: '5',
-      tags: '',
-    });
+    setNewProject(initialFormState);
 
     // Show success message with blockchain info
     toast.success(
@@ -228,11 +160,12 @@ export function Projects() {
     );
   };
 
-  const statusConfig = {
-    active: { label: '進行中', color: 'bg-green-50 text-green-700 border-green-200' },
-    planning: { label: '計画中', color: 'bg-blue-50 text-blue-700 border-blue-200' },
-    completed: { label: '完了', color: 'bg-gray-50 text-gray-700 border-gray-200' },
-  };
+  const statsCards = [
+    { icon: CheckCircle2, color: 'green', label: '進行中', value: projects.filter(p => p.status === 'active').length },
+    { icon: Clock, color: 'blue', label: '計画中', value: projects.filter(p => p.status === 'planning').length },
+    { icon: Users, color: 'purple', label: '総参加者', value: projects.reduce((sum, p) => sum + p.members, 0) },
+    { icon: FileText, color: 'orange', label: '論文発表', value: projects.reduce((sum, p) => sum + p.papers, 0) },
+  ];
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -253,61 +186,21 @@ export function Projects() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-50 text-green-600 rounded-lg flex items-center justify-center">
-                <CheckCircle2 className="w-5 h-5" />
+        {statsCards.map(({ icon: Icon, color, label, value }, index) => (
+          <Card key={index}>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 bg-${color}-50 text-${color}-600 rounded-lg flex items-center justify-center`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-2xl">{value}</div>
+                  <p className="text-gray-600 text-sm">{label}</p>
+                </div>
               </div>
-              <div>
-                <div className="text-2xl">{projects.filter(p => p.status === 'active').length}</div>
-                <p className="text-gray-600 text-sm">進行中</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
-                <Clock className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="text-2xl">{projects.filter(p => p.status === 'planning').length}</div>
-                <p className="text-gray-600 text-sm">計画中</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center">
-                <Users className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="text-2xl">{projects.reduce((sum, p) => sum + p.members, 0)}</div>
-                <p className="text-gray-600 text-sm">総参加者</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-orange-50 text-orange-600 rounded-lg flex items-center justify-center">
-                <FileText className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="text-2xl">{projects.reduce((sum, p) => sum + p.papers, 0)}</div>
-                <p className="text-gray-600 text-sm">論文発表</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Projects */}
@@ -680,17 +573,7 @@ export function Projects() {
               variant="outline"
               onClick={() => {
                 setIsCreateDialogOpen(false);
-                setNewProject({
-                  title: '',
-                  description: '',
-                  category: '',
-                  startDate: '',
-                  endDate: '',
-                  universities: '',
-                  funding: '',
-                  expectedMembers: '5',
-                  tags: '',
-                });
+                setNewProject(initialFormState);
               }}
             >
               キャンセル

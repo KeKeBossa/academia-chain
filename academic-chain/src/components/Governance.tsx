@@ -37,69 +37,56 @@ interface GovernanceProps {
   votingPower: number;
 }
 
+const statusConfig = {
+  active: { label: '投票中', color: 'bg-blue-50 text-blue-700 border-blue-200', icon: Clock },
+  pending: { label: '開始前', color: 'bg-gray-50 text-gray-700 border-gray-200', icon: Clock },
+  passed: { label: '可決', color: 'bg-green-50 text-green-700 border-green-200', icon: CheckCircle2 },
+  rejected: { label: '否決', color: 'bg-red-50 text-red-700 border-red-200', icon: XCircle },
+};
+
+const categories = [
+  'プラットフォーム改善', '資金配分', '査読システム',
+  'インセンティブ', 'コミュニティ運営', 'その他',
+];
+
+const initialFormState = {
+  title: '', description: '', category: '', requiredTokens: '100', votingPeriod: '7',
+};
+
+const getStoredProposals = (): Proposal[] => {
+  try {
+    const stored = localStorage.getItem('academic-chain:proposals');
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.warn('Failed to parse proposals from localStorage:', error);
+    return [];
+  }
+};
+
 export function Governance({ votingPower }: GovernanceProps) {
   const { t } = useTranslation();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isVotingPowerInfoOpen, setIsVotingPowerInfoOpen] = useState(false);
-  const [newProposal, setNewProposal] = useState({
-    title: '',
-    description: '',
-    category: '',
-    requiredTokens: '100',
-    votingPeriod: '7',
-  });
-  
-  // localStorage から提案を取得
-  const getStoredProposals = (): Proposal[] => {
-    try {
-      const stored = localStorage.getItem('academic-chain:proposals');
-      return stored ? JSON.parse(stored) : [];
-    } catch (error) {
-      console.warn('Failed to parse proposals from localStorage:', error);
-      return [];
-    }
-  };
-
+  const [newProposal, setNewProposal] = useState(initialFormState);
   const [proposals, setProposals] = useState<Proposal[]>(getStoredProposals());
-
-  const statusConfig = {
-    active: { label: '投票中', color: 'bg-blue-50 text-blue-700 border-blue-200', icon: Clock },
-    pending: { label: '開始前', color: 'bg-gray-50 text-gray-700 border-gray-200', icon: Clock },
-    passed: { label: '可決', color: 'bg-green-50 text-green-700 border-green-200', icon: CheckCircle2 },
-    rejected: { label: '否決', color: 'bg-red-50 text-red-700 border-red-200', icon: XCircle },
-  };
-
-  const categories = [
-    'プラットフォーム改善',
-    '資金配分',
-    '査読システム',
-    'インセンティブ',
-    'コミュニティ運営',
-    'その他',
-  ];
 
   const handleCreateProposal = () => {
     // Validation
-    if (!newProposal.title.trim()) {
-      toast.error('提案タイトルを入力してください');
-      return;
+    const validations = [
+      { condition: !newProposal.title.trim(), message: '提案タイトルを入力してください' },
+      { condition: newProposal.title.length < 10, message: '提案タイトルは10文字以上で入力してください' },
+      { condition: !newProposal.description.trim(), message: '提案内容を入力してください' },
+      { condition: newProposal.description.length < 50, message: '提案内容は50文字以上で入力してください' },
+      { condition: !newProposal.category, message: 'カテゴリを選択してください' },
+    ];
+
+    for (const { condition, message } of validations) {
+      if (condition) {
+        toast.error(message);
+        return;
+      }
     }
-    if (newProposal.title.length < 10) {
-      toast.error('提案タイトルは10文字以上で入力してください');
-      return;
-    }
-    if (!newProposal.description.trim()) {
-      toast.error('提案内容を入力してください');
-      return;
-    }
-    if (newProposal.description.length < 50) {
-      toast.error('提案内容は50文字以上で入力してください');
-      return;
-    }
-    if (!newProposal.category) {
-      toast.error('カテゴリを選択してください');
-      return;
-    }
+
     const tokensRequired = parseInt(newProposal.requiredTokens);
     if (isNaN(tokensRequired) || tokensRequired < 50 || tokensRequired > 1000) {
       toast.error('必要トークンは50〜1000の範囲で入力してください');
@@ -141,18 +128,16 @@ export function Governance({ votingPower }: GovernanceProps) {
 
     setProposals([proposal, ...proposals]);
     setIsCreateDialogOpen(false);
-    
-    // Reset form
-    setNewProposal({
-      title: '',
-      description: '',
-      category: '',
-      requiredTokens: '100',
-      votingPeriod: '7',
-    });
+    setNewProposal(initialFormState);
 
     toast.success('提案を作成しました。投票開始まで審査が行われます。');
   };
+
+  const statsCards = [
+    { icon: Clock, color: 'blue', label: '進行中の投票', value: proposals.filter(p => p.status === 'active').length },
+    { icon: CheckCircle2, color: 'green', label: '参加した投票', value: proposals.filter(p => p.status === 'passed').length },
+    { icon: TrendingUp, color: 'purple', label: '提出した提案', value: proposals.length },
+  ];
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -212,47 +197,21 @@ export function Governance({ votingPower }: GovernanceProps) {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
-                <Clock className="w-6 h-6" />
+        {statsCards.map(({ icon: Icon, color, label, value }, index) => (
+          <Card key={index}>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className={`w-12 h-12 bg-${color}-50 text-${color}-600 rounded-xl flex items-center justify-center`}>
+                  <Icon className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="text-3xl mb-1">{value}</div>
+                  <p className="text-gray-600">{label}</p>
+                </div>
               </div>
-              <div>
-                <div className="text-3xl mb-1">{proposals.filter(p => p.status === 'active').length}</div>
-                <p className="text-gray-600">進行中の投票</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-green-50 text-green-600 rounded-xl flex items-center justify-center">
-                <CheckCircle2 className="w-6 h-6" />
-              </div>
-              <div>
-                <div className="text-3xl mb-1">{proposals.filter(p => p.status === 'passed').length}</div>
-                <p className="text-gray-600">参加した投票</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center">
-                <TrendingUp className="w-6 h-6" />
-              </div>
-              <div>
-                <div className="text-3xl mb-1">{proposals.length}</div>
-                <p className="text-gray-600">提出した提案</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Proposals */}
