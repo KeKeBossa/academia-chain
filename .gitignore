@@ -33,3 +33,6 @@ tmp/
 
 # Docker local volumes
 .docker/postgres/data/
+
+# Vite build output
+academic-chain/build/

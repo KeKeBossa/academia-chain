@@ -17,7 +17,7 @@ export const SEMINAR_FORM_DEFAULTS = {
   tags: '',
   website: '',
   email: '',
-  openForCollaboration: true,
+  openForCollaboration: true
 };
 
 export type SeminarFormData = {
@@ -90,11 +90,18 @@ export function validateSeminarForm(data: Partial<Record<string, any>>): {
 
   // Website validation
   if (data.website && typeof data.website === 'string' && !data.website.match(/^https?:\/\/.+/)) {
-    return { isValid: false, error: 'ウェブサイトURLは http:// または https:// で始まる必要があります' };
+    return {
+      isValid: false,
+      error: 'ウェブサイトURLは http:// または https:// で始まる必要があります'
+    };
   }
 
   // Email validation
-  if (data.email && typeof data.email === 'string' && !data.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+  if (
+    data.email &&
+    typeof data.email === 'string' &&
+    !data.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)
+  ) {
     return { isValid: false, error: '有効なメールアドレスを入力してください' };
   }
 
@@ -126,8 +133,8 @@ export function generateBlockchainHash(): string {
 export function parseTags(tagsString: string): string[] {
   return tagsString
     .split(',')
-    .map(t => t.trim())
-    .filter(t => t.length > 0);
+    .map((t) => t.trim())
+    .filter((t) => t.length > 0);
 }
 
 /**
@@ -153,6 +160,6 @@ export function getResearchFields(): string[] {
     '電気電子工学',
     '経済学',
     '社会学',
-    'その他',
+    'その他'
   ];
 }

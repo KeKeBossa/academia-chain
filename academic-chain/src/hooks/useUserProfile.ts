@@ -37,7 +37,7 @@ const DEFAULT_PROFILE: UserProfile = {
   seminars: 0,
   projects: 0,
   daoTokens: 0,
-  joinDate: new Date().toISOString().split('T')[0],
+  joinDate: new Date().toISOString().split('T')[0]
 };
 
 export function useUserProfile() {
@@ -77,7 +77,7 @@ export function useUserProfile() {
       // プロフィール完成時刻を記録
       const completedProfile = {
         ...updatedProfile,
-        profileCompletedAt: new Date().toISOString(),
+        profileCompletedAt: new Date().toISOString()
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(completedProfile));
       setProfile(completedProfile);
@@ -100,19 +100,22 @@ export function useUserProfile() {
   }, []);
 
   // 統計情報を更新（useData フックから）
-  const updateStats = useCallback((stats: {
-    papers?: number;
-    seminars?: number;
-    projects?: number;
-    reputation?: number;
-    daoTokens?: number;
-  }) => {
-    if (profile) {
-      const updatedProfile = { ...profile, ...stats };
-      setProfile(updatedProfile);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedProfile));
-    }
-  }, [profile]);
+  const updateStats = useCallback(
+    (stats: {
+      papers?: number;
+      seminars?: number;
+      projects?: number;
+      reputation?: number;
+      daoTokens?: number;
+    }) => {
+      if (profile) {
+        const updatedProfile = { ...profile, ...stats };
+        setProfile(updatedProfile);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedProfile));
+      }
+    },
+    [profile]
+  );
 
   return {
     profile,
@@ -121,6 +124,6 @@ export function useUserProfile() {
     saveProfile,
     markProfileCompleted,
     resetProfile,
-    updateStats,
+    updateStats
   };
 }

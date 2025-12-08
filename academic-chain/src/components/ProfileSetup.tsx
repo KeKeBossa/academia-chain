@@ -48,7 +48,7 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
       seminars: 0,
       projects: 0,
       daoTokens: 0,
-      joinDate: new Date().toISOString().split('T')[0],
+      joinDate: new Date().toISOString().split('T')[0]
     }
   );
 
@@ -111,7 +111,7 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
 
     setFormData({
       ...formData,
-      researchFields: [...formData.researchFields, newField],
+      researchFields: [...formData.researchFields, newField]
     });
     setNewField('');
     toast.success(`「${newField}」を追加しました`);
@@ -120,7 +120,7 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
   const handleRemoveResearchField = (field: string) => {
     setFormData({
       ...formData,
-      researchFields: formData.researchFields.filter(f => f !== field),
+      researchFields: formData.researchFields.filter((f) => f !== field)
     });
   };
 
@@ -148,18 +148,14 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">プロフィール設定</h1>
-          <p className="text-gray-600">
-            あなたの研究活動を紹介するプロフィールを作成してください
-          </p>
+          <p className="text-gray-600">あなたの研究活動を紹介するプロフィールを作成してください</p>
         </div>
 
         {/* Form Card */}
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle>基本情報</CardTitle>
-            <CardDescription>
-              後ほどいつでも編集できます
-            </CardDescription>
+            <CardDescription>後ほどいつでも編集できます</CardDescription>
           </CardHeader>
 
           <CardContent>
@@ -170,16 +166,12 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
                 <Input
                   id="name"
                   value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="例: 山田 太郎"
                   maxLength={50}
                   className={errors.name ? 'border-red-500' : ''}
                 />
-                {errors.name && (
-                  <p className="text-red-500 text-sm mt-1">{errors.name}</p>
-                )}
+                {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
               </div>
 
               {/* Email */}
@@ -189,25 +181,27 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
                   id="email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="例: user@example.ac.jp"
                   className={errors.email ? 'border-red-500' : ''}
                 />
-                {errors.email && (
-                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-                )}
+                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
               </div>
 
               {/* University & Department */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="university">大学 *</Label>
-                  <Select value={formData.university} onValueChange={(value: string) => {
-                    setFormData({ ...formData, university: value, department: '' });
-                  }}>
-                    <SelectTrigger id="university" className={errors.university ? 'border-red-500' : ''}>
+                  <Select
+                    value={formData.university}
+                    onValueChange={(value: string) => {
+                      setFormData({ ...formData, university: value, department: '' });
+                    }}
+                  >
+                    <SelectTrigger
+                      id="university"
+                      className={errors.university ? 'border-red-500' : ''}
+                    >
                       <SelectValue placeholder="大学を選択..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -219,21 +213,20 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
                     </SelectContent>
                   </Select>
                   {errors.university && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.university}
-                    </p>
+                    <p className="text-red-500 text-sm mt-1">{errors.university}</p>
                   )}
                 </div>
 
                 <div>
                   <Label htmlFor="department">学部・専攻 *</Label>
                   <Combobox
-                    options={formData.university 
-                      ? getDepartmentsByUniversity(formData.university).map(dept => ({
-                          label: dept.name,
-                          value: dept.name
-                        }))
-                      : []
+                    options={
+                      formData.university
+                        ? getDepartmentsByUniversity(formData.university).map((dept) => ({
+                            label: dept.name,
+                            value: dept.name
+                          }))
+                        : []
                     }
                     value={formData.department}
                     onValueChange={(value: string) => {
@@ -242,14 +235,14 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
                     onCustomValue={(customValue: string) => {
                       setFormData({ ...formData, department: customValue });
                     }}
-                    placeholder={formData.university ? '学部を選択または入力...' : '大学を先に選択してください'}
+                    placeholder={
+                      formData.university ? '学部を選択または入力...' : '大学を先に選択してください'
+                    }
                     searchPlaceholder="学部・専攻を検索..."
                     allowCustom={true}
                   />
                   {errors.department && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.department}
-                    </p>
+                    <p className="text-red-500 text-sm mt-1">{errors.department}</p>
                   )}
                 </div>
               </div>
@@ -258,10 +251,16 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="academicLevel">学年 *</Label>
-                  <Select value={formData.academicLevel} onValueChange={(value: string) => {
-                    setFormData({ ...formData, academicLevel: value });
-                  }}>
-                    <SelectTrigger id="academicLevel" className={errors.academicLevel ? 'border-red-500' : ''}>
+                  <Select
+                    value={formData.academicLevel}
+                    onValueChange={(value: string) => {
+                      setFormData({ ...formData, academicLevel: value });
+                    }}
+                  >
+                    <SelectTrigger
+                      id="academicLevel"
+                      className={errors.academicLevel ? 'border-red-500' : ''}
+                    >
                       <SelectValue placeholder="学年を選択..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -273,9 +272,7 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
                     </SelectContent>
                   </Select>
                   {errors.academicLevel && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.academicLevel}
-                    </p>
+                    <p className="text-red-500 text-sm mt-1">{errors.academicLevel}</p>
                   )}
                 </div>
 
@@ -284,17 +281,13 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
                   <Input
                     id="position"
                     value={formData.position}
-                    onChange={(e) =>
-                      setFormData({ ...formData, position: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, position: e.target.value })}
                     placeholder="例: 研究員"
                     maxLength={50}
                     className={errors.position ? 'border-red-500' : ''}
                   />
                   {errors.position && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.position}
-                    </p>
+                    <p className="text-red-500 text-sm mt-1">{errors.position}</p>
                   )}
                 </div>
               </div>
@@ -360,21 +353,15 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
                 <Textarea
                   id="bio"
                   value={formData.bio}
-                  onChange={(e) =>
-                    setFormData({ ...formData, bio: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                   placeholder="あなたの研究内容や興味分野について教えてください"
                   rows={5}
                   maxLength={500}
                   className={errors.bio ? 'border-red-500' : ''}
                 />
                 <div className="flex justify-between items-center mt-1">
-                  <p className="text-xs text-gray-500">
-                    {formData.bio.length} / 500文字
-                  </p>
-                  {errors.bio && (
-                    <p className="text-red-500 text-sm">{errors.bio}</p>
-                  )}
+                  <p className="text-xs text-gray-500">{formData.bio.length} / 500文字</p>
+                  {errors.bio && <p className="text-red-500 text-sm">{errors.bio}</p>}
                 </div>
               </div>
 

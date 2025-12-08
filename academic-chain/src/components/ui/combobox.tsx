@@ -1,21 +1,17 @@
-import * as React from "react"
-import { Check, ChevronsUpDown } from "lucide-react"
+import * as React from 'react';
+import { Check, ChevronsUpDown } from 'lucide-react';
 
-import { cn } from "./utils"
-import { Button } from "./button"
+import { cn } from './utils';
+import { Button } from './button';
 import {
   Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
-  CommandList,
-} from "./command"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "./popover"
+  CommandList
+} from './command';
+import { Popover, PopoverContent, PopoverTrigger } from './popover';
 
 export interface ComboboxProps {
   options: { label: string; value: string }[];
@@ -32,30 +28,31 @@ export function Combobox({
   options,
   value,
   onValueChange,
-  placeholder = "選択...",
-  searchPlaceholder = "検索...",
-  emptyText = "見つかりません",
+  placeholder = '選択...',
+  searchPlaceholder = '検索...',
+  emptyText = '見つかりません',
   allowCustom = false,
-  onCustomValue,
+  onCustomValue
 }: ComboboxProps) {
-  const [open, setOpen] = React.useState(false)
-  const [searchValue, setSearchValue] = React.useState("")
+  const [open, setOpen] = React.useState(false);
+  const [searchValue, setSearchValue] = React.useState('');
 
-  const filtered = options.filter((option) =>
-    option.label.toLowerCase().includes(searchValue.toLowerCase()) ||
-    option.value.toLowerCase().includes(searchValue.toLowerCase())
-  )
+  const filtered = options.filter(
+    (option) =>
+      option.label.toLowerCase().includes(searchValue.toLowerCase()) ||
+      option.value.toLowerCase().includes(searchValue.toLowerCase())
+  );
 
-  const selectedLabel = options.find((opt) => opt.value === value)?.label || value || placeholder
+  const selectedLabel = options.find((opt) => opt.value === value)?.label || value || placeholder;
 
   const handleCustomValue = (customVal: string) => {
     if (customVal.trim()) {
-      onValueChange(customVal)
-      onCustomValue?.(customVal)
-      setSearchValue("")
-      setOpen(false)
+      onValueChange(customVal);
+      onCustomValue?.(customVal);
+      setSearchValue('');
+      setOpen(false);
     }
-  }
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -72,7 +69,7 @@ export function Combobox({
       </PopoverTrigger>
       <PopoverContent className="w-full p-0">
         <Command>
-          <CommandInput 
+          <CommandInput
             placeholder={searchPlaceholder}
             value={searchValue}
             onValueChange={setSearchValue}
@@ -96,15 +93,15 @@ export function Combobox({
                   key={option.value}
                   value={option.value}
                   onSelect={(currentValue) => {
-                    onValueChange(currentValue === value ? "" : currentValue)
-                    setSearchValue("")
-                    setOpen(false)
+                    onValueChange(currentValue === value ? '' : currentValue);
+                    setSearchValue('');
+                    setOpen(false);
                   }}
                 >
                   <Check
                     className={cn(
-                      "mr-2 h-4 w-4",
-                      value === option.value ? "opacity-100" : "opacity-0"
+                      'mr-2 h-4 w-4',
+                      value === option.value ? 'opacity-100' : 'opacity-0'
                     )}
                   />
                   {option.label}
@@ -115,5 +112,5 @@ export function Combobox({
         </Command>
       </PopoverContent>
     </Popover>
-  )
+  );
 }

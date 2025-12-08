@@ -18,7 +18,13 @@ import {
   MessageCircle
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/app/components/ui/avatar';
@@ -41,7 +47,11 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
   const router = useRouter();
   const { id } = params;
 
-  const { data: project, isLoading, error } = useQuery({
+  const {
+    data: project,
+    isLoading,
+    error
+  } = useQuery({
     queryKey: ['collaboration-post', id],
     queryFn: () => fetchCollaborationPostDetail(id)
   });
@@ -77,11 +87,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="mb-6">
-          <Button
-            variant="ghost"
-            onClick={() => router.back()}
-            className="mb-4"
-          >
+          <Button variant="ghost" onClick={() => router.back()} className="mb-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
             戻る
           </Button>
@@ -98,9 +104,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
                   <div className="flex-1">
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">{project.title}</h1>
                     <div className="flex items-center gap-2">
-                      <Badge className={statusInfo.color}>
-                        {statusInfo.label}
-                      </Badge>
+                      <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
                     </div>
                   </div>
                 </div>
@@ -113,9 +117,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
                 <CardTitle>プロジェクト説明</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
-                  {project.body}
-                </p>
+                <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{project.body}</p>
               </CardContent>
             </Card>
 
@@ -175,12 +177,10 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
                 <CardTitle>アクション</CardTitle>
               </CardHeader>
               <CardContent className="flex gap-3">
-                <Button
-                  className="flex-1"
-                  size="lg"
-                  disabled={project.status !== 'OPEN'}
-                >
-                  {project.status === 'OPEN' ? '参加を申し込む' : 'このプロジェクトは募集中ではありません'}
+                <Button className="flex-1" size="lg" disabled={project.status !== 'OPEN'}>
+                  {project.status === 'OPEN'
+                    ? '参加を申し込む'
+                    : 'このプロジェクトは募集中ではありません'}
                 </Button>
                 <Button variant="outline" size="lg">
                   <Share2 className="w-4 h-4 mr-2" />
@@ -279,14 +279,10 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
                     )}
                   </div>
                   <p className="text-xs text-gray-600 mt-2">
-                    {project.status === 'OPEN' &&
-                      'このプロジェクトは新しいメンバーを募集中です。'}
-                    {project.status === 'FILLED' &&
-                      'このプロジェクトの募集人員は充足しています。'}
-                    {project.status === 'CLOSED' &&
-                      'このプロジェクトは終了しました。'}
-                    {project.status === 'ARCHIVED' &&
-                      'このプロジェクトはアーカイブされています。'}
+                    {project.status === 'OPEN' && 'このプロジェクトは新しいメンバーを募集中です。'}
+                    {project.status === 'FILLED' && 'このプロジェクトの募集人員は充足しています。'}
+                    {project.status === 'CLOSED' && 'このプロジェクトは終了しました。'}
+                    {project.status === 'ARCHIVED' && 'このプロジェクトはアーカイブされています。'}
                   </p>
                 </div>
               </CardContent>

@@ -1,7 +1,7 @@
 /**
  * Japanese Universities Database
  * 日本の主要大学と学部データ（拡張可能な構造）
- * 
+ *
  * 構造:
  * - id: 大学の一意識別子
  * - name: 大学名
@@ -44,9 +44,13 @@ export const UNIVERSITIES: University[] = [
       { id: 'todai-law', name: '法学部', nameEn: 'Faculty of Law' },
       { id: 'todai-med', name: '医学部', nameEn: 'Faculty of Medicine' },
       { id: 'todai-ag', name: '農学部', nameEn: 'Faculty of Agriculture' },
-      { id: 'todai-grad-eng', name: '情報理工学系研究科', nameEn: 'Graduate School of Information Science and Technology' },
-      { id: 'todai-grad-sci', name: '理学系研究科', nameEn: 'Graduate School of Science' },
-    ],
+      {
+        id: 'todai-grad-eng',
+        name: '情報理工学系研究科',
+        nameEn: 'Graduate School of Information Science and Technology'
+      },
+      { id: 'todai-grad-sci', name: '理学系研究科', nameEn: 'Graduate School of Science' }
+    ]
   },
   {
     id: 'tit',
@@ -59,8 +63,8 @@ export const UNIVERSITIES: University[] = [
       { id: 'tit-eng', name: '工学部', nameEn: 'School of Engineering' },
       { id: 'tit-sci', name: '理学部', nameEn: 'School of Science' },
       { id: 'tit-arch', name: '建築学部', nameEn: 'School of Architecture' },
-      { id: 'tit-grad', name: '工学院', nameEn: 'School of Engineering' },
-    ],
+      { id: 'tit-grad', name: '工学院', nameEn: 'School of Engineering' }
+    ]
   },
   {
     id: 'hitotsubashi',
@@ -73,8 +77,8 @@ export const UNIVERSITIES: University[] = [
       { id: 'hitotsubashi-econ', name: '経済学部', nameEn: 'Faculty of Economics' },
       { id: 'hitotsubashi-law', name: '法学部', nameEn: 'Faculty of Law' },
       { id: 'hitotsubashi-comm', name: '商学部', nameEn: 'Faculty of Commerce' },
-      { id: 'hitotsubashi-soc', name: '社会学部', nameEn: 'Faculty of Social Sciences' },
-    ],
+      { id: 'hitotsubashi-soc', name: '社会学部', nameEn: 'Faculty of Social Sciences' }
+    ]
   },
 
   // 関東 - 私立
@@ -86,15 +90,27 @@ export const UNIVERSITIES: University[] = [
     type: 'private',
     website: 'https://www.waseda.jp/',
     departments: [
-      { id: 'waseda-pol', name: '政治経済学部', nameEn: 'Faculty of Political Science and Economics' },
+      {
+        id: 'waseda-pol',
+        name: '政治経済学部',
+        nameEn: 'Faculty of Political Science and Economics'
+      },
       { id: 'waseda-law', name: '法学部', nameEn: 'Faculty of Law' },
       { id: 'waseda-lit', name: '文学部', nameEn: 'Faculty of Letters' },
       { id: 'waseda-sci', name: '理工学部', nameEn: 'Faculty of Science and Engineering' },
-      { id: 'waseda-coe', name: '基幹理工学部', nameEn: 'Faculty of Fundamental Science and Engineering' },
-      { id: 'waseda-ase', name: '創造理工学部', nameEn: 'Faculty of Creative Science and Engineering' },
+      {
+        id: 'waseda-coe',
+        name: '基幹理工学部',
+        nameEn: 'Faculty of Fundamental Science and Engineering'
+      },
+      {
+        id: 'waseda-ase',
+        name: '創造理工学部',
+        nameEn: 'Faculty of Creative Science and Engineering'
+      },
       { id: 'waseda-soc', name: '社会科学部', nameEn: 'Faculty of Social Sciences' },
-      { id: 'waseda-intl', name: '国際教養学部', nameEn: 'Faculty of International Liberal Arts' },
-    ],
+      { id: 'waseda-intl', name: '国際教養学部', nameEn: 'Faculty of International Liberal Arts' }
+    ]
   },
   {
     id: 'keio',
@@ -110,8 +126,12 @@ export const UNIVERSITIES: University[] = [
       { id: 'keio-lit', name: '文学部', nameEn: 'Faculty of Letters' },
       { id: 'keio-med', name: '医学部', nameEn: 'Faculty of Medicine' },
       { id: 'keio-eng', name: '理工学部', nameEn: 'Faculty of Science and Technology' },
-      { id: 'keio-env', name: '環境情報学部', nameEn: 'Faculty of Environment and Information Studies' },
-    ],
+      {
+        id: 'keio-env',
+        name: '環境情報学部',
+        nameEn: 'Faculty of Environment and Information Studies'
+      }
+    ]
   },
   {
     id: 'chuo',
@@ -125,8 +145,8 @@ export const UNIVERSITIES: University[] = [
       { id: 'chuo-econ', name: '経済学部', nameEn: 'Faculty of Economics' },
       { id: 'chuo-biz', name: '商学部', nameEn: 'Faculty of Commerce' },
       { id: 'chuo-lib', name: '文学部', nameEn: 'Faculty of Letters' },
-      { id: 'chuo-sci', name: '理工学部', nameEn: 'Faculty of Science and Engineering' },
-    ],
+      { id: 'chuo-sci', name: '理工学部', nameEn: 'Faculty of Science and Engineering' }
+    ]
   },
 
   // 関西 - 国立
@@ -144,8 +164,8 @@ export const UNIVERSITIES: University[] = [
       { id: 'kyoto-econ', name: '経済学部', nameEn: 'Faculty of Economics' },
       { id: 'kyoto-law', name: '法学部', nameEn: 'Faculty of Law' },
       { id: 'kyoto-ag', name: '農学部', nameEn: 'Faculty of Agriculture' },
-      { id: 'kyoto-med', name: '医学部', nameEn: 'Faculty of Medicine' },
-    ],
+      { id: 'kyoto-med', name: '医学部', nameEn: 'Faculty of Medicine' }
+    ]
   },
   {
     id: 'osaka',
@@ -160,8 +180,8 @@ export const UNIVERSITIES: University[] = [
       { id: 'osaka-let', name: '文学部', nameEn: 'Faculty of Letters' },
       { id: 'osaka-econ', name: '経済学部', nameEn: 'Faculty of Economics' },
       { id: 'osaka-law', name: '法学部', nameEn: 'Faculty of Law' },
-      { id: 'osaka-med', name: '医学部', nameEn: 'Faculty of Medicine' },
-    ],
+      { id: 'osaka-med', name: '医学部', nameEn: 'Faculty of Medicine' }
+    ]
   },
   {
     id: 'kobe',
@@ -175,8 +195,8 @@ export const UNIVERSITIES: University[] = [
       { id: 'kobe-sci', name: '理学部', nameEn: 'Faculty of Science' },
       { id: 'kobe-let', name: '文学部', nameEn: 'Faculty of Letters' },
       { id: 'kobe-econ', name: '経済学部', nameEn: 'Faculty of Economics' },
-      { id: 'kobe-law', name: '法学部', nameEn: 'Faculty of Law' },
-    ],
+      { id: 'kobe-law', name: '法学部', nameEn: 'Faculty of Law' }
+    ]
   },
 
   // 関西 - 私立
@@ -189,8 +209,8 @@ export const UNIVERSITIES: University[] = [
     website: 'https://www.kansai-gaidai.ac.jp/',
     departments: [
       { id: 'kg-foreign', name: '外国語学部', nameEn: 'Faculty of Foreign Languages' },
-      { id: 'kg-intl', name: '国際文化学部', nameEn: 'Faculty of International Culture' },
-    ],
+      { id: 'kg-intl', name: '国際文化学部', nameEn: 'Faculty of International Culture' }
+    ]
   },
 
   // 東北 - 国立
@@ -208,8 +228,8 @@ export const UNIVERSITIES: University[] = [
       { id: 'tohoku-econ', name: '経済学部', nameEn: 'Faculty of Economics' },
       { id: 'tohoku-law', name: '法学部', nameEn: 'Faculty of Law' },
       { id: 'tohoku-med', name: '医学部', nameEn: 'Faculty of Medicine' },
-      { id: 'tohoku-ag', name: '農学部', nameEn: 'Faculty of Agriculture' },
-    ],
+      { id: 'tohoku-ag', name: '農学部', nameEn: 'Faculty of Agriculture' }
+    ]
   },
 
   // 北海道 - 国立
@@ -227,8 +247,8 @@ export const UNIVERSITIES: University[] = [
       { id: 'hokudai-econ', name: '経済学部', nameEn: 'Faculty of Economics' },
       { id: 'hokudai-law', name: '法学部', nameEn: 'Faculty of Law' },
       { id: 'hokudai-ag', name: '農学部', nameEn: 'Faculty of Agriculture' },
-      { id: 'hokudai-med', name: '医学部', nameEn: 'Faculty of Medicine' },
-    ],
+      { id: 'hokudai-med', name: '医学部', nameEn: 'Faculty of Medicine' }
+    ]
   },
 
   // 中部 - 国立
@@ -246,8 +266,8 @@ export const UNIVERSITIES: University[] = [
       { id: 'nagoya-econ', name: '経済学部', nameEn: 'Faculty of Economics' },
       { id: 'nagoya-law', name: '法学部', nameEn: 'Faculty of Law' },
       { id: 'nagoya-ag', name: '農学部', nameEn: 'Faculty of Agriculture' },
-      { id: 'nagoya-med', name: '医学部', nameEn: 'Faculty of Medicine' },
-    ],
+      { id: 'nagoya-med', name: '医学部', nameEn: 'Faculty of Medicine' }
+    ]
   },
 
   // 九州 - 国立
@@ -265,9 +285,9 @@ export const UNIVERSITIES: University[] = [
       { id: 'kyushu-econ', name: '経済学部', nameEn: 'Faculty of Economics' },
       { id: 'kyushu-law', name: '法学部', nameEn: 'Faculty of Law' },
       { id: 'kyushu-ag', name: '農学部', nameEn: 'Faculty of Agriculture' },
-      { id: 'kyushu-med', name: '医学部', nameEn: 'Faculty of Medicine' },
-    ],
-  },
+      { id: 'kyushu-med', name: '医学部', nameEn: 'Faculty of Medicine' }
+    ]
+  }
 ];
 
 /**
@@ -276,12 +296,12 @@ export const UNIVERSITIES: University[] = [
 
 /** 大学名から大学オブジェクトを取得 */
 export const getUniversityByName = (name: string): University | undefined => {
-  return UNIVERSITIES.find(uni => uni.name === name);
+  return UNIVERSITIES.find((uni) => uni.name === name);
 };
 
 /** 大学IDから大学オブジェクトを取得 */
 export const getUniversityById = (id: string): University | undefined => {
-  return UNIVERSITIES.find(uni => uni.id === id);
+  return UNIVERSITIES.find((uni) => uni.id === id);
 };
 
 /** 大学名から学部リストを取得 */
@@ -292,23 +312,23 @@ export const getDepartmentsByUniversity = (universityName: string): Department[]
 
 /** 地域から大学リストを取得 */
 export const getUniversitiesByRegion = (region: string): University[] => {
-  return UNIVERSITIES.filter(uni => uni.region === region);
+  return UNIVERSITIES.filter((uni) => uni.region === region);
 };
 
 /** 大学タイプから大学リストを取得 */
 export const getUniversitiesByType = (type: 'national' | 'private' | 'public'): University[] => {
-  return UNIVERSITIES.filter(uni => uni.type === type);
+  return UNIVERSITIES.filter((uni) => uni.type === type);
 };
 
 /** 大学名リスト（ソート済み） */
-export const UNIVERSITY_NAMES = UNIVERSITIES.map(uni => uni.name).sort();
+export const UNIVERSITY_NAMES = UNIVERSITIES.map((uni) => uni.name).sort();
 
 /** 地域リスト */
-export const REGIONS = Array.from(new Set(UNIVERSITIES.map(uni => uni.region))).sort();
+export const REGIONS = Array.from(new Set(UNIVERSITIES.map((uni) => uni.region))).sort();
 
 /** 大学タイプリスト */
 export const UNIVERSITY_TYPES = [
   { value: 'national', label: '国立大学' },
   { value: 'private', label: '私立大学' },
-  { value: 'public', label: '公立大学' },
+  { value: 'public', label: '公立大学' }
 ] as const;

@@ -24,7 +24,7 @@ import { useTranslation } from 'react-i18next';
 
 export function MyComponent() {
   const { t } = useTranslation();
-  
+
   return <h1>{t('dashboard.title')}</h1>;
 }
 ```
@@ -57,7 +57,9 @@ export function MyComponent() {
 ```
 
 ```tsx
-{t('dashboard.newPaperPublished', { title: paper.title })}
+{
+  t('dashboard.newPaperPublished', { title: paper.title });
+}
 ```
 
 ## 📝 新しい文字列を追加する手順

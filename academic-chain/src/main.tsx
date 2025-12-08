@@ -1,7 +1,22 @@
-
-import { createRoot } from "react-dom/client";
-import App from "./App";
-import "./index.css";
+import { createRoot } from 'react-dom/client';
+import { WagmiProvider } from 'wagmi';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
+import App from './App';
+import './index.css';
 import './i18n';
+import '@rainbow-me/rainbowkit/styles.css';
+import { wagmiConfig } from './lib/wagmi';
 
-createRoot(document.getElementById("root")!).render(<App />);  
+const queryClient = new QueryClient();
+
+createRoot(document.getElementById('root')!).render(
+  <WagmiProvider config={wagmiConfig}>
+    <QueryClientProvider client={queryClient}>
+      <RainbowKitProvider>
+        <App />
+      </RainbowKitProvider>
+    </QueryClientProvider>
+  </WagmiProvider>
+);
+

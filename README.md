@@ -17,9 +17,12 @@
 
 </details>
 
-分散型ID（DID）と DAO ガバナンスを活用し、研究成果を検証可能な形で共有するフルスタック MVP です。Next.js (App Router)、Prisma/PostgreSQL、Hardhat を中心に Polygon Amoy / Sepolia テストネットと連携します。
+分散型ID（DID）と DAO ガバナンスを活用し、研究成果を検証可能な形で共有するフルスタック MVP です。
 
 ## 概要
+
+**本番環境**: Vite + Supabase でデプロイ  
+**開発環境**: Hardhat (スマートコントラクト開発) + Next.js (オプション)
 
 - ラボや研究室を DAO として登録し、トークン投票で意思決定を行う
 - 研究成果を IPFS に記録し、DAO 内レビュー/レピュテーションと連動
@@ -38,63 +41,89 @@
 
 ## アーキテクチャと技術スタック
 
+### 本番環境 (Production)
+
 | レイヤー             | 技術                                                               | メモ                                   |
 | -------------------- | ------------------------------------------------------------------ | -------------------------------------- |
-| フロント             | Next.js 14, TypeScript, Tailwind CSS, RainbowKit, Radix UI, Sonner | `src/app` 以下で App Router 構成       |
-| スマートコントラクト | Solidity, Hardhat, OpenZeppelin, Ignition                          | `contracts/`, `ignition/`              |
-| バックエンド         | Prisma, PostgreSQL (Docker), Supabase                              | `prisma/schema.prisma`, `src/server/*` |
-| 周辺ツール           | Web3.Storage, Storacha, Docker Compose                             | `.docker/`, `scripts/`                 |
+| フロント             | Vite, React 18, TypeScript, Tailwind CSS, RainbowKit, Radix UI     | `academic-chain/` ディレクトリ         |
+| バックエンド         | Supabase (PostgreSQL, Auth, Storage)                               | Supabase Cloud                         |
+| ブロックチェーン     | RainbowKit, wagmi, viem                                            | Ethereum / Polygon 接続                |
+| デプロイ             | Vercel (または Netlify)                                            | `academic-chain/vercel.json`           |
+
+### 開発環境 (Development)
+
+| レイヤー             | 技術                                                               | メモ                                   |
+| -------------------- | ------------------------------------------------------------------ | -------------------------------------- |
+| スマートコントラクト | Solidity, Hardhat, OpenZeppelin, Ignition                          | `contracts/`, `ignition/` (ルート)     |
+| テストツール         | Hardhat, Chai, Mocha                                               | `test/` (ルート)                       |
+| オプション UI        | Next.js 14 (契約管理用)                                            | `src/app` (開発専用、デプロイ不要)     |
 
 ```
-┌──────────────┐    ┌────────────────┐
-│ Next.js App  │──→│ Prisma Client  │──→ PostgreSQL (Docker)
-│ (RainbowKit) │    └────────────────┘
-│              │           │
-│ wagmi /      │           │ シード/同期
-│ Radix UI     │           ▼
-└─────▲────────┘    Smart Contracts (Hardhat / Polygon Amoy)
-      │ ウォレット接続
-      ▼
-   研究者 / DAO メンバー
+【本番環境】
+┌─────────────────┐
+│ Vite React App  │──→ Supabase (Auth, DB, Storage)
+│  (Vercel)       │──→ Ethereum/Polygon (RainbowKit + wagmi)
+└─────────────────┘
+
+【開発環境】
+┌─────────────────┐
 ```
 
 ## クイックスタート
 
-### 前提条件
-
-- Node.js 18.17 以上 / npm 9 以上
-- Docker（PostgreSQL 用）
-- Polygon Amoy / Sepolia RPC エンドポイント
-
-### 手順
+### 本番環境 (Vite + Supabase)
 
 ```bash
-# 1. 依存関係をインストール
+# 1. academic-chainディレクトリに移動
+cd academic-chain
+
+# 2. 依存関係をインストール
+npm install
+
+# 3. 環境変数ファイルを用意
+cp .env.example .env
+# Supabase URL/Key, WalletConnect Project ID, Alchemy API Key を設定
+
+# 4. 開発サーバー起動
+npm run dev
+
+# 5. ビルド (本番用)
+npm run build
+```
+
+### 開発環境 (Hardhat - スマートコントラクト)
+
+```bash
+# 1. ルートディレクトリで依存関係をインストール
 npm install
 
 # 2. 環境変数ファイルを用意
 cp .env.example .env
-# VC_ENCRYPTION_SECRET, RPC URL, Storacha 情報を更新
+# RPC URL, PRIVATE_KEY, Storacha 情報を更新
 
-# 3. Postgres を起動
-npm run db:start
+# 3. スマートコントラクトをコンパイル
+npm run compile
 
-# 4. Prisma クライアント生成 & マイグレーション
-npm run prisma:generate
-npm run prisma:migrate
+# 4. テスト実行
+npm run test
 
-# 5. 開発サーバー（ポートが制限される環境では PORT を変更）
-PORT=3001 npm run dev
+# 5. コントラクトをデプロイ (Sepolia)
+npx hardhat ignition deploy ignition/modules/AcademicRepository.ts --network sepolia
 ```
 
 ## 利用可能なスクリプト
 
+### Vite UI (academic-chain/)
+
 | コマンド                                                   | 内容                                               |
 | ---------------------------------------------------------- | -------------------------------------------------- |
-| `npm run dev`                                              | Next.js 開発サーバー (Turbopack)。                 |
-| `npm run build` / `npm run start`                          | プロダクションビルド / サーバー起動。              |
-| `npm run lint`                                             | ESLint (App Router + TypeScript)。                 |
-| `npm run format` / `npm run format:check`                  | Prettier で TS / Solidity / Prisma を整形 / 検証。 |
+| `npm run dev`                                              | Vite 開発サーバー (ホットリロード付き)。           |
+| `npm run build`                                            | 本番用ビルド (build/ ディレクトリに出力)。         |
+
+### Hardhat (ルート/)
+
+| コマンド                                                   | 内容                                               |
+| ---------------------------------------------------------- | -------------------------------------------------- |
 | `npm run compile`                                          | Hardhat で Solidity をコンパイル。                 |
 | `npm run test`                                             | Hardhat テストスイート。                           |
 | `npm run prisma:generate` / `npm run prisma:migrate`       | Prisma Client 生成 / Migrate。                     |
@@ -158,11 +187,70 @@ academic-repository/
 
 ## デプロイ前チェックリスト
 
-1. `plans.md` の進捗を更新し、該当セッションの ToDo を完了させる。
-2. `npm run lint`, `npm run compile`, `npm run test`, `npm run build` がすべて成功。
-3. `.env.production` に本番 `DATABASE_URL` / `VC_ENCRYPTION_SECRET` / RPC URL を設定。
-4. `npm run verify:staging` で Storacha・コントラクト構成を検証。
-5. CI（`.github/workflows/ci.yml`）のジョブが成功していることを確認。
+### Vite UI (本番環境)
+
+1. `academic-chain/.env.production` に本番環境変数を設定:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+   - `VITE_WALLETCONNECT_PROJECT_ID`
+   - `VITE_ALCHEMY_API_KEY`
+2. `cd academic-chain && npm run build` が成功することを確認。
+3. Vercel にデプロイ: `vercel --prod` (または GitHub 連携)
+4. Supabase プロジェクトのセットアップ完了を確認。
+
+### スマートコントラクト (開発環境)
+
+1. `npm run compile`, `npm run test` がすべて成功。
+2. `.env` に本番 RPC URL / PRIVATE_KEY を設定。
+3. コントラクトをメインネットにデプロイ:
+   ```bash
+   npx hardhat ignition deploy ignition/modules/AcademicRepository.ts --network mainnet
+   ```
+4. デプロイされたコントラクトアドレスを `academic-chain/.env.production` に追加。
+
+## 本番環境へのデプロイ
+
+### Vite UI → Vercel
+
+```bash
+# 1. Vercel CLI をインストール
+npm i -g vercel
+
+# 2. academic-chain ディレクトリでデプロイ
+cd academic-chain
+vercel --prod
+
+# 3. 環境変数を Vercel ダッシュボードで設定
+# VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, etc.
+```
+
+### Supabase セットアップ
+
+1. [Supabase](https://supabase.com) でプロジェクトを作成
+2. Database タブでテーブルを作成 (papers, profiles, etc.)
+3. API Settings から URL と Anon Key を取得
+4. Vercel の環境変数に設定
+
+詳細な本番環境設定手順は **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** を参照してください。
+cp .env.production.example .env.production
+
+# 2. 必要な環境変数を設定 (DATABASE_URL, RPC URLs, API Keys など)
+
+# 3. Vercel へデプロイ
+npm i -g vercel
+vercel --prod
+
+# または GitHub Actions で自動デプロイ
+# main ブランチへプッシュすると自動的にデプロイされます
+```
+
+### デプロイ先オプション
+
+- **Vercel** (推奨) - Next.js 最適化、簡単設定
+- **Railway** - Docker + PostgreSQL 統合
+- **Render** / **Fly.io** - フルスタック対応
+
+詳細は [DEPLOYMENT.md](docs/DEPLOYMENT.md) の手順に従ってください。
 
 ## ロードマップ
 

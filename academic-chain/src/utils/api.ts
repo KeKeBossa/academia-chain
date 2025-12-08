@@ -35,8 +35,8 @@ export async function apiFetch<T>(
       method: options.method || 'GET',
       headers: {
         'Content-Type': 'application/json',
-        ...options.headers,
-      },
+        ...options.headers
+      }
     };
 
     if (options.body) {

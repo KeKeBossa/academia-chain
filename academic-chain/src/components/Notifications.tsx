@@ -1,10 +1,29 @@
 import { useState } from 'react';
-import { Bell, Vote, FileText, Users, Briefcase, MessageSquare, Award, CheckCircle2, Calendar, ExternalLink, Trash2, MoreVertical, Filter } from 'lucide-react';
+import {
+  Bell,
+  Vote,
+  FileText,
+  Users,
+  Briefcase,
+  MessageSquare,
+  Award,
+  CheckCircle2,
+  Calendar,
+  ExternalLink,
+  Trash2,
+  MoreVertical,
+  Filter
+} from 'lucide-react';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from './ui/dropdown-menu';
 import { toast } from 'sonner';
 import { type Notification } from '../hooks/useData';
 
@@ -19,7 +38,7 @@ interface NotificationsProps {
   onDeleteAllRead: () => void;
 }
 
-export function Notifications({ 
+export function Notifications({
   notifications,
   onMarkAsRead,
   onDeleteNotification,
@@ -66,13 +85,11 @@ export function Notifications({
     }
   };
 
-
-
-  const filteredNotifications = notifications.filter(notif =>
+  const filteredNotifications = notifications.filter((notif) =>
     filter === 'all' ? true : !notif.read
   );
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -80,15 +97,11 @@ export function Notifications({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-gray-900 mb-2">お知らせ</h1>
-          <p className="text-gray-600">
-            プラットフォーム内の活動やイベントの通知
-          </p>
+          <p className="text-gray-600">プラットフォーム内の活動やイベントの通知</p>
         </div>
         <div className="flex items-center gap-2">
           {unreadCount > 0 && (
-            <Badge className="bg-blue-600 text-white">
-              {unreadCount}件の未読
-            </Badge>
+            <Badge className="bg-blue-600 text-white">{unreadCount}件の未読</Badge>
           )}
         </div>
       </div>
@@ -97,14 +110,14 @@ export function Notifications({
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
-            <Tabs value={filter} onValueChange={(v: string) => setFilter(v as 'all' | 'unread')} className="w-auto">
+            <Tabs
+              value={filter}
+              onValueChange={(v: string) => setFilter(v as 'all' | 'unread')}
+              className="w-auto"
+            >
               <TabsList>
-                <TabsTrigger value="all">
-                  すべて ({notifications.length})
-                </TabsTrigger>
-                <TabsTrigger value="unread">
-                  未読 ({unreadCount})
-                </TabsTrigger>
+                <TabsTrigger value="all">すべて ({notifications.length})</TabsTrigger>
+                <TabsTrigger value="unread">未読 ({unreadCount})</TabsTrigger>
               </TabsList>
             </Tabs>
 
@@ -128,7 +141,7 @@ export function Notifications({
                   onDeleteAllRead();
                   toast.success('既読の通知を削除しました');
                 }}
-                disabled={notifications.filter(n => n.read).length === 0}
+                disabled={notifications.filter((n) => n.read).length === 0}
               >
                 <Trash2 className="w-4 h-4 mr-2" />
                 既読通知を削除
@@ -195,10 +208,12 @@ export function Notifications({
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           {!notification.read && (
-                            <DropdownMenuItem onClick={() => {
-                              onMarkAsRead(notification.id);
-                              toast.success('既読にしました');
-                            }}>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                onMarkAsRead(notification.id);
+                                toast.success('既読にしました');
+                              }}
+                            >
                               <CheckCircle2 className="w-4 h-4 mr-2" />
                               既読にする
                             </DropdownMenuItem>
@@ -261,26 +276,24 @@ export function Notifications({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center">
                 <div className="text-2xl text-blue-900 mb-1">
-                  {notifications.filter(n => n.type === 'proposal').length}
+                  {notifications.filter((n) => n.type === 'proposal').length}
                 </div>
                 <div className="text-xs text-blue-700">DAO提案</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl text-blue-900 mb-1">
-                  {notifications.filter(n => n.type === 'project').length}
+                  {notifications.filter((n) => n.type === 'project').length}
                 </div>
                 <div className="text-xs text-blue-700">プロジェクト</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl text-blue-900 mb-1">
-                  {notifications.filter(n => n.type === 'paper').length}
+                  {notifications.filter((n) => n.type === 'paper').length}
                 </div>
                 <div className="text-xs text-blue-700">論文</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl text-blue-900 mb-1">
-                  {unreadCount}
-                </div>
+                <div className="text-2xl text-blue-900 mb-1">{unreadCount}</div>
                 <div className="text-xs text-blue-700">未読</div>
               </div>
             </div>

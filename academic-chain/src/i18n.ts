@@ -4,13 +4,13 @@ import ja from './locales/ja.json';
 
 i18n.use(initReactI18next).init({
   resources: {
-    ja: { translation: ja },
+    ja: { translation: ja }
   },
   lng: 'ja',
   fallbackLng: 'ja',
   interpolation: {
-    escapeValue: false,
-  },
+    escapeValue: false
+  }
 });
 
 export default i18n;

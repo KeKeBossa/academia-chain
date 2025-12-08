@@ -1,6 +1,19 @@
-import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
-import { Edit, Mail, MapPin, GraduationCap, Award, FileText, Users, Briefcase, ExternalLink, Shield, Hash, X, Plus } from 'lucide-react';
+import {
+  Edit,
+  Mail,
+  MapPin,
+  GraduationCap,
+  Award,
+  FileText,
+  Users,
+  Briefcase,
+  ExternalLink,
+  Shield,
+  Hash,
+  X,
+  Plus
+} from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback } from './ui/avatar';
@@ -8,30 +21,42 @@ import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Progress } from './ui/progress';
 import { Skeleton } from './ui/skeleton';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from './ui/dialog';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Combobox } from './ui/combobox';
 import { toast } from 'sonner';
-import { usePapers, useProjects, useSeminars, calculateReputation, calculateVotingPower } from '../hooks/useData';
+import {
+  usePapers,
+  useProjects,
+  useSeminars,
+  calculateReputation,
+  calculateVotingPower
+} from '../hooks/useData';
 import { useUserProfile, type UserProfile } from '../hooks/useUserProfile';
 import { UNIVERSITY_NAMES, getDepartmentsByUniversity } from '../data/universities';
 import { ACADEMIC_LEVELS } from '../data/academic-levels';
 
 export function Profile() {
-  const { t } = useTranslation();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  
+
   // useUserProfile フックから状態を取得
   const { profile, isLoading: profileLoading, saveProfile, updateStats } = useUserProfile();
-  
+
   // 実データから取得
   const { papers: fetchedPapers, loading: loadingPapers } = usePapers();
   const { projects: fetchedProjects, loading: loadingProjects } = useProjects();
   const { seminars: fetchedSeminars, loading: loadingSeminars } = useSeminars();
-  
+
   const [editForm, setEditForm] = useState<UserProfile>({
     name: '',
     did: '',
@@ -47,7 +72,7 @@ export function Profile() {
     seminars: 0,
     projects: 0,
     daoTokens: 0,
-    joinDate: new Date().toISOString().split('T')[0],
+    joinDate: new Date().toISOString().split('T')[0]
   });
   const [newResearchField, setNewResearchField] = useState('');
 
@@ -68,10 +93,17 @@ export function Profile() {
         seminars: fetchedSeminars.length,
         projects: fetchedProjects.length,
         reputation: calculatedReputation,
-        daoTokens: Math.round(calculatedVotingPower),
+        daoTokens: Math.round(calculatedVotingPower)
       });
     }
-  }, [fetchedPapers.length, fetchedSeminars.length, fetchedProjects.length, profile, profileLoading, updateStats]);
+  }, [
+    fetchedPapers.length,
+    fetchedSeminars.length,
+    fetchedProjects.length,
+    profile,
+    profileLoading,
+    updateStats
+  ]);
 
   if (profileLoading || !profile) {
     return (
@@ -82,18 +114,18 @@ export function Profile() {
     );
   }
 
-  const recentPapers = fetchedPapers.slice(0, 3).map(p => ({
+  const recentPapers = fetchedPapers.slice(0, 3).map((p) => ({
     title: p.title,
     date: p.date,
     citations: p.citations || 0,
-    downloads: p.downloads || 0,
+    downloads: p.downloads || 0
   }));
 
   const achievements = [
     { title: '初論文公開', icon: FileText, date: '2024-05-10', color: 'blue' },
     { title: '10論文公開達成', icon: Award, date: '2025-08-15', color: 'gold' },
     { title: '共同研究開始', icon: Users, date: '2024-06-20', color: 'green' },
-    { title: 'DAOトークン500達成', icon: Award, date: '2025-07-01', color: 'purple' },
+    { title: 'DAOトークン500達成', icon: Award, date: '2025-07-01', color: 'purple' }
   ];
 
   const skills = [
@@ -101,7 +133,7 @@ export function Profile() {
     { name: '機械学習', level: 90 },
     { name: 'Python', level: 95 },
     { name: 'Qiskit', level: 80 },
-    { name: 'ブロックチェーン', level: 70 },
+    { name: 'ブロックチェーン', level: 70 }
   ];
 
   return (
@@ -128,7 +160,9 @@ export function Profile() {
                     </div>
                     <div className="flex items-center gap-2">
                       <GraduationCap className="w-4 h-4" />
-                      <span>{profile.university} - {profile.department}</span>
+                      <span>
+                        {profile.university} - {profile.department}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4" />
@@ -140,10 +174,12 @@ export function Profile() {
                     </div>
                   </div>
                 </div>
-                <Button onClick={() => {
-                  setEditForm(profile);
-                  setIsEditDialogOpen(true);
-                }}>
+                <Button
+                  onClick={() => {
+                    setEditForm(profile);
+                    setIsEditDialogOpen(true);
+                  }}
+                >
                   <Edit className="w-4 h-4 mr-2" />
                   編集
                 </Button>
@@ -234,7 +270,10 @@ export function Profile() {
             </CardHeader>
             <CardContent className="space-y-4">
               {recentPapers.map((paper, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
+                <div
+                  key={index}
+                  className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
+                >
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="text-gray-900">{paper.title}</h3>
                     <Badge variant="secondary">検証済</Badge>
@@ -269,13 +308,15 @@ export function Profile() {
                     blue: 'bg-blue-50 text-blue-600',
                     gold: 'bg-yellow-50 text-yellow-600',
                     green: 'bg-green-50 text-green-600',
-                    purple: 'bg-purple-50 text-purple-600',
+                    purple: 'bg-purple-50 text-purple-600'
                   }[achievement.color];
 
                   return (
                     <div key={index} className="border border-gray-200 rounded-lg p-4">
                       <div className="flex items-center gap-3">
-                        <div className={`w-12 h-12 rounded-xl ${colorClasses} flex items-center justify-center`}>
+                        <div
+                          className={`w-12 h-12 rounded-xl ${colorClasses} flex items-center justify-center`}
+                        >
                           <Icon className="w-6 h-6" />
                         </div>
                         <div>
@@ -359,9 +400,7 @@ export function Profile() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>プロフィール編集</DialogTitle>
-            <DialogDescription>
-              あなたの研究者プロフィールを更新してください
-            </DialogDescription>
+            <DialogDescription>あなたの研究者プロフィールを更新してください</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6 py-4">
@@ -391,9 +430,12 @@ export function Profile() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="university">大学 *</Label>
-                  <Select value={editForm.university} onValueChange={(value: string) => {
-                    setEditForm({ ...editForm, university: value, department: '' });
-                  }}>
+                  <Select
+                    value={editForm.university}
+                    onValueChange={(value: string) => {
+                      setEditForm({ ...editForm, university: value, department: '' });
+                    }}
+                  >
                     <SelectTrigger id="university">
                       <SelectValue placeholder="大学を選択..." />
                     </SelectTrigger>
@@ -410,12 +452,13 @@ export function Profile() {
                 <div>
                   <Label htmlFor="department">学部・研究科 *</Label>
                   <Combobox
-                    options={editForm.university 
-                      ? getDepartmentsByUniversity(editForm.university).map(dept => ({
-                          label: dept.name,
-                          value: dept.name
-                        }))
-                      : []
+                    options={
+                      editForm.university
+                        ? getDepartmentsByUniversity(editForm.university).map((dept) => ({
+                            label: dept.name,
+                            value: dept.name
+                          }))
+                        : []
                     }
                     value={editForm.department}
                     onValueChange={(value: string) => {
@@ -424,7 +467,9 @@ export function Profile() {
                     onCustomValue={(customValue: string) => {
                       setEditForm({ ...editForm, department: customValue });
                     }}
-                    placeholder={editForm.university ? '学部を選択または入力...' : '大学を先に選択してください'}
+                    placeholder={
+                      editForm.university ? '学部を選択または入力...' : '大学を先に選択してください'
+                    }
                     searchPlaceholder="学部・研究科を検索..."
                     allowCustom={true}
                   />
@@ -434,9 +479,12 @@ export function Profile() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="academicLevel">学年 *</Label>
-                  <Select value={editForm.academicLevel} onValueChange={(value: string) => {
-                    setEditForm({ ...editForm, academicLevel: value });
-                  }}>
+                  <Select
+                    value={editForm.academicLevel}
+                    onValueChange={(value: string) => {
+                      setEditForm({ ...editForm, academicLevel: value });
+                    }}
+                  >
                     <SelectTrigger id="academicLevel">
                       <SelectValue placeholder="学年を選択..." />
                     </SelectTrigger>
@@ -472,9 +520,7 @@ export function Profile() {
                 placeholder="研究テーマや興味のある分野について..."
                 rows={4}
               />
-              <p className="text-xs text-gray-500 mt-1">
-                {editForm.bio.length} / 500文字
-              </p>
+              <p className="text-xs text-gray-500 mt-1">{editForm.bio.length} / 500文字</p>
             </div>
 
             {/* Research Fields */}
@@ -500,7 +546,7 @@ export function Profile() {
                   ))
                 )}
               </div>
-              
+
               <div className="flex gap-2">
                 <Input
                   value={newResearchField}
@@ -508,7 +554,10 @@ export function Profile() {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
-                      if (newResearchField.trim() && !editForm.researchFields.includes(newResearchField.trim())) {
+                      if (
+                        newResearchField.trim() &&
+                        !editForm.researchFields.includes(newResearchField.trim())
+                      ) {
                         setEditForm({
                           ...editForm,
                           researchFields: [...editForm.researchFields, newResearchField.trim()]
@@ -523,7 +572,10 @@ export function Profile() {
                   type="button"
                   variant="outline"
                   onClick={() => {
-                    if (newResearchField.trim() && !editForm.researchFields.includes(newResearchField.trim())) {
+                    if (
+                      newResearchField.trim() &&
+                      !editForm.researchFields.includes(newResearchField.trim())
+                    ) {
                       setEditForm({
                         ...editForm,
                         researchFields: [...editForm.researchFields, newResearchField.trim()]
@@ -568,9 +620,13 @@ export function Profile() {
             <Button
               onClick={() => {
                 // Validation
-                if (!editForm.name.trim() || !editForm.email.trim() || 
-                    !editForm.university.trim() || !editForm.department.trim() || 
-                    !editForm.position.trim()) {
+                if (
+                  !editForm.name.trim() ||
+                  !editForm.email.trim() ||
+                  !editForm.university.trim() ||
+                  !editForm.department.trim() ||
+                  !editForm.position.trim()
+                ) {
                   toast.error('必須項目を入力してください');
                   return;
                 }
