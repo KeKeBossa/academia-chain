@@ -16,7 +16,13 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
 import { Input } from '@/app/components/ui/input';
@@ -47,7 +53,11 @@ export default function ProjectsPage() {
   const daoOptions = useMemo(() => daoData?.daos ?? [], [daoData]);
 
   // プロジェクト一覧を取得
-  const { data: projectsData, isLoading, error } = useQuery({
+  const {
+    data: projectsData,
+    isLoading,
+    error
+  } = useQuery({
     queryKey: ['projects-page-posts', selectedDao],
     queryFn: () => fetchCollaborationPosts({ daoId: selectedDao || undefined })
   });
@@ -61,8 +71,7 @@ export default function ProjectsPage() {
       .filter((post) => {
         const search = searchTerm.toLowerCase();
         return (
-          post.title.toLowerCase().includes(search) ||
-          post.body.toLowerCase().includes(search)
+          post.title.toLowerCase().includes(search) || post.body.toLowerCase().includes(search)
         );
       });
   }, [allPosts, searchTerm, selectedStatus]);

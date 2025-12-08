@@ -19,6 +19,37 @@ import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Badge } from '../ui/badge';
 import { fetchDashboardStats, fetchDashboardContent } from '@/lib/dashboard/api';
 
+type StatColor = 'blue' | 'purple' | 'green' | 'orange';
+
+interface DashboardStat {
+  label: string;
+  value: string;
+  change: string;
+  color: StatColor;
+}
+
+interface RecentPaper {
+  id: string;
+  title: string;
+  author: string;
+  university: string;
+  date: string;
+  tags: string[];
+  likes: number;
+  comments: number;
+  verified: boolean;
+}
+
+interface UpcomingEvent {
+  id: string;
+  title: string;
+  date: string;
+  time?: string;
+  type: string;
+  organization: string;
+  participants?: number;
+}
+
 const iconMap = {
   '公開論文': FileText,
   '参加ゼミ': Users,
@@ -37,9 +68,9 @@ export function Dashboard() {
     queryFn: fetchDashboardContent
   });
 
-  const stats = statsData?.stats ?? [];
-  const recentPapers = contentData?.recentPapers ?? [];
-  const upcomingEvents = contentData?.upcomingEvents ?? [];
+  const stats: DashboardStat[] = statsData?.stats ?? [];
+  const recentPapers: RecentPaper[] = contentData?.recentPapers ?? [];
+  const upcomingEvents: UpcomingEvent[] = contentData?.upcomingEvents ?? [];
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">

@@ -95,15 +95,15 @@ export default function HomePage() {
   const [userDID, setUserDID] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [notificationPopupOpen, setNotificationPopupOpen] = useState(false);
-  
+
   // 通知データをクエリで取得
   const { data: notificationsData } = useQuery({
     queryKey: ['notifications'],
-    queryFn: fetchNotifications
+    queryFn: () => fetchNotifications()
   });
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  
+
   // APIから取得した通知データで初期化
   useEffect(() => {
     if (notificationsData?.notifications) {

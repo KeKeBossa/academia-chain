@@ -77,10 +77,10 @@ export function Seminars() {
   // 実データをクエリで取得
   const { data: seminarsData, isLoading: isLoadingSeminars } = useQuery({
     queryKey: ['seminars'],
-    queryFn: fetchSeminars
+    queryFn: () => fetchSeminars()
   });
 
-  const seminars = seminarsData?.seminars ?? [];
+  const seminars: Seminar[] = seminarsData?.seminars ?? [];
   const hasData = seminars.length > 0;
 
   const researchFields = [
