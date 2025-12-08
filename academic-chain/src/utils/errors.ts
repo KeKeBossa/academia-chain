@@ -40,7 +40,7 @@ export function logError(
     userId: context.userId,
     component: context.component,
     action: context.action,
-    metadata: context.metadata,
+    metadata: context.metadata
   };
 
   // Log based on environment
@@ -78,7 +78,7 @@ export async function executeWithErrorHandler<T>(
     logError(error, context);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: error instanceof Error ? error.message : 'Unknown error'
     };
   }
 }

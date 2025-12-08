@@ -6,7 +6,14 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from './ui/dialog';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { toast } from 'sonner';
@@ -26,12 +33,20 @@ const CATEGORIES = [
   '数学',
   '物理学',
   '化学',
-  'その他',
+  'その他'
 ];
 
 const initialFormState = {
-  title: '', authors: '', university: '', department: '', abstract: '',
-  category: '', tags: '', doi: '', accessType: 'open' as 'open' | 'restricted', fileName: '',
+  title: '',
+  authors: '',
+  university: '',
+  department: '',
+  abstract: '',
+  category: '',
+  tags: '',
+  doi: '',
+  accessType: 'open' as 'open' | 'restricted',
+  fileName: ''
 };
 
 interface RepositoryProps {
@@ -48,12 +63,19 @@ export function Repository({ onNavigateToPaper }: RepositoryProps) {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [newPaper, setNewPaper] = useState(initialFormState);
 
-  const filters = useMemo(() => ({
-    category: selectedCategory === 'all' ? undefined : selectedCategory,
-  }), [selectedCategory]);
+  const filters = useMemo(
+    () => ({
+      category: selectedCategory === 'all' ? undefined : selectedCategory
+    }),
+    [selectedCategory]
+  );
 
   // refreshTrigger が変わるたびにデータを再読み込み
-  const { papers: fetchedPapers, loading: loadingPapers } = usePapers(searchQuery, filters, refreshTrigger);
+  const { papers: fetchedPapers, loading: loadingPapers } = usePapers(
+    searchQuery,
+    filters,
+    refreshTrigger
+  );
 
   const sortedPapers = useMemo(() => {
     if (!fetchedPapers) return [];
@@ -70,22 +92,25 @@ export function Repository({ onNavigateToPaper }: RepositoryProps) {
     }
   }, [fetchedPapers, sortBy]);
 
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!file.name.toLowerCase().endsWith('.pdf')) {
-        toast.error('PDFファイルを選択してください');
-        return;
+  const handleFileSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        if (!file.name.toLowerCase().endsWith('.pdf')) {
+          toast.error('PDFファイルを選択してください');
+          return;
+        }
+        if (file.size > 50 * 1024 * 1024) {
+          toast.error('ファイルサイズは50MB以下にしてください');
+          return;
+        }
+        setPdfFile(file);
+        setNewPaper({ ...newPaper, fileName: file.name });
+        toast.success(`${file.name} を選択しました`);
       }
-      if (file.size > 50 * 1024 * 1024) {
-        toast.error('ファイルサイズは50MB以下にしてください');
-        return;
-      }
-      setPdfFile(file);
-      setNewPaper({ ...newPaper, fileName: file.name });
-      toast.success(`${file.name} を選択しました`);
-    }
-  }, [newPaper]);
+    },
+    [newPaper]
+  );
 
   const validateForm = useCallback((): boolean => {
     if (!newPaper.title.trim() || newPaper.title.length < 10) {
@@ -115,16 +140,17 @@ export function Repository({ onNavigateToPaper }: RepositoryProps) {
     if (!validateForm()) return;
 
     toast.info('IPFSへアップロード中...');
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Generate mock IPFS hash and transaction hash
-    const ipfsHash = 'QmVYBU-' + Array.from({ length: 40 }, () => 
-      Math.random().toString(36)[2]
-    ).join('').substring(0, 40);
-    
-    const txHash = '0x' + Array.from({ length: 64 }, () => 
-      Math.floor(Math.random() * 16).toString(16)
-    ).join('');
+    const ipfsHash =
+      'QmVYBU-' +
+      Array.from({ length: 40 }, () => Math.random().toString(36)[2])
+        .join('')
+        .substring(0, 40);
+
+    const txHash =
+      '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
 
     // PDF ファイルを Base64 にエンコード
     let pdfUrl: string | undefined;
@@ -132,7 +158,7 @@ export function Repository({ onNavigateToPaper }: RepositoryProps) {
       const reader = new FileReader();
       reader.onload = (event) => {
         pdfUrl = event.target?.result as string;
-        
+
         // Add paper to storage using the utility function
         const paper = savePaperToStorage({
           title: newPaper.title,
@@ -141,14 +167,17 @@ export function Repository({ onNavigateToPaper }: RepositoryProps) {
           department: newPaper.department,
           abstract: newPaper.abstract,
           category: newPaper.category,
-          tags: newPaper.tags.split(',').map(t => t.trim()).filter(t => t),
+          tags: newPaper.tags
+            .split(',')
+            .map((t) => t.trim())
+            .filter((t) => t),
           date: new Date().toISOString(),
           ipfsHash,
           txHash,
           accessType: newPaper.accessType as 'open' | 'restricted',
-          pdfUrl,
+          pdfUrl
         });
-        
+
         showSuccessToast(txHash, ipfsHash);
       };
       reader.readAsDataURL(pdfFile);
@@ -161,18 +190,21 @@ export function Repository({ onNavigateToPaper }: RepositoryProps) {
         department: newPaper.department,
         abstract: newPaper.abstract,
         category: newPaper.category,
-        tags: newPaper.tags.split(',').map(t => t.trim()).filter(t => t),
+        tags: newPaper.tags
+          .split(',')
+          .map((t) => t.trim())
+          .filter((t) => t),
         date: new Date().toISOString(),
         ipfsHash,
         txHash,
-        accessType: newPaper.accessType as 'open' | 'restricted',
+        accessType: newPaper.accessType as 'open' | 'restricted'
       });
-      
+
       showSuccessToast(txHash, ipfsHash);
     }
 
     // Trigger data refresh in usePapers hook
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshTrigger((prev) => prev + 1);
 
     setIsPublishDialogOpen(false);
     setNewPaper(initialFormState);
@@ -201,13 +233,13 @@ export function Repository({ onNavigateToPaper }: RepositoryProps) {
   const handleLike = useCallback((paperId: string) => {
     toast.success('いいねしました');
     // UI を再レンダリングして最新のいいね数を表示
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshTrigger((prev) => prev + 1);
   }, []);
 
   const handleDownload = useCallback((paperId: string) => {
     toast.success('ダウンロード開始');
     // UI を再レンダリングしてダウンロード数を更新
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshTrigger((prev) => prev + 1);
   }, []);
 
   return (
@@ -217,7 +249,7 @@ export function Repository({ onNavigateToPaper }: RepositoryProps) {
           <h1 className="text-gray-900 mb-2">研究レポジトリ</h1>
           <p className="text-gray-600">ブロックチェーンで永続的に記録された学術論文</p>
         </div>
-        <Button 
+        <Button
           className="bg-gradient-to-r from-blue-600 to-indigo-600"
           onClick={() => setIsPublishDialogOpen(true)}
         >
@@ -245,7 +277,9 @@ export function Repository({ onNavigateToPaper }: RepositoryProps) {
               <SelectContent>
                 <SelectItem value="all">すべて</SelectItem>
                 {CATEGORIES.map((cat) => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  <SelectItem key={cat} value={cat}>
+                    {cat}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -274,11 +308,20 @@ export function Repository({ onNavigateToPaper }: RepositoryProps) {
 
         <TabsContent value="all">
           {loadingPapers ? (
-            <>{[1, 2, 3].map((i) => <Skeleton key={i} className="h-48" />)}</>
+            <>
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-48" />
+              ))}
+            </>
           ) : sortedPapers.length === 0 ? (
             <div className="text-center py-12 text-gray-500">論文が見つかりません</div>
           ) : (
-            <PaperList papers={sortedPapers} onLike={handleLike} onDownload={handleDownload} onNavigateToPaper={onNavigateToPaper} />
+            <PaperList
+              papers={sortedPapers}
+              onLike={handleLike}
+              onDownload={handleDownload}
+              onNavigateToPaper={onNavigateToPaper}
+            />
           )}
         </TabsContent>
 
@@ -381,20 +424,30 @@ export function Repository({ onNavigateToPaper }: RepositoryProps) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>研究分野 *</Label>
-                <Select value={newPaper.category} onValueChange={(value: string) => setNewPaper({ ...newPaper, category: value })}>
+                <Select
+                  value={newPaper.category}
+                  onValueChange={(value: string) => setNewPaper({ ...newPaper, category: value })}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {CATEGORIES.map((cat) => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label>公開設定 *</Label>
-                <Select value={newPaper.accessType} onValueChange={(value: string) => setNewPaper({ ...newPaper, accessType: value as 'open' | 'restricted' })}>
+                <Select
+                  value={newPaper.accessType}
+                  onValueChange={(value: string) =>
+                    setNewPaper({ ...newPaper, accessType: value as 'open' | 'restricted' })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

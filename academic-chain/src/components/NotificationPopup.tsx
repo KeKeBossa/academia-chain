@@ -1,4 +1,15 @@
-import { Bell, Vote, FileText, Users, Briefcase, MessageSquare, Award, CheckCircle2, ExternalLink, ArrowRight } from 'lucide-react';
+import {
+  Bell,
+  Vote,
+  FileText,
+  Users,
+  Briefcase,
+  MessageSquare,
+  Award,
+  CheckCircle2,
+  ExternalLink,
+  ArrowRight
+} from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
@@ -13,8 +24,12 @@ interface NotificationPopupProps {
   onViewAll: () => void;
 }
 
-export function NotificationPopup({ notifications, onMarkAsRead, onMarkAllAsRead, onViewAll }: NotificationPopupProps) {
-
+export function NotificationPopup({
+  notifications,
+  onMarkAsRead,
+  onMarkAllAsRead,
+  onViewAll
+}: NotificationPopupProps) {
   const getNotificationIcon = (type: NotificationType) => {
     switch (type) {
       case 'proposal':
@@ -53,7 +68,7 @@ export function NotificationPopup({ notifications, onMarkAsRead, onMarkAllAsRead
     }
   };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
     <div className="w-[400px] bg-white rounded-lg shadow-lg border border-gray-200">
@@ -62,9 +77,7 @@ export function NotificationPopup({ notifications, onMarkAsRead, onMarkAllAsRead
         <div className="flex items-center gap-2">
           <h3 className="text-gray-900">お知らせ</h3>
           {unreadCount > 0 && (
-            <Badge className="bg-red-600 text-white text-xs">
-              {unreadCount}
-            </Badge>
+            <Badge className="bg-red-600 text-white text-xs">{unreadCount}</Badge>
           )}
         </div>
         <Button

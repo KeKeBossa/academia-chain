@@ -8,7 +8,10 @@ import { toast } from 'sonner';
 /**
  * Create a toast handler for a given message
  */
-export function createToastHandler(message: string, type: 'success' | 'error' | 'info' = 'success') {
+export function createToastHandler(
+  message: string,
+  type: 'success' | 'error' | 'info' = 'success'
+) {
   return () => {
     toast[type](message);
   };

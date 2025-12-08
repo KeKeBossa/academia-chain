@@ -22,9 +22,12 @@ export function PaperList({ papers, onLike, onDownload, onNavigateToPaper }: Pap
   const memoizedPapers = useMemo(() => papers, [papers]);
 
   // コールバック：ダウンロード
-  const handleDownload = useCallback((paperId: string) => {
-    onDownload(paperId);
-  }, [onDownload]);
+  const handleDownload = useCallback(
+    (paperId: string) => {
+      onDownload(paperId);
+    },
+    [onDownload]
+  );
 
   if (memoizedPapers.length === 0) {
     return (
@@ -37,9 +40,9 @@ export function PaperList({ papers, onLike, onDownload, onNavigateToPaper }: Pap
   return (
     <div className="space-y-4">
       {memoizedPapers.map((paper) => (
-        <PaperCard 
-          key={paper.id} 
-          paper={paper} 
+        <PaperCard
+          key={paper.id}
+          paper={paper}
           onDownload={handleDownload}
           onNavigateToPaper={onNavigateToPaper}
         />
@@ -89,7 +92,10 @@ function PaperCard({ paper, onDownload, onNavigateToPaper }: PaperCardProps) {
                 <div className="flex items-center gap-2 mb-2">
                   <h3 className="text-gray-900">{paper.title}</h3>
                   {paper.verified && (
-                    <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
+                    <Badge
+                      variant="secondary"
+                      className="bg-green-50 text-green-700 border-green-200"
+                    >
                       検証済
                     </Badge>
                   )}
@@ -109,9 +115,7 @@ function PaperCard({ paper, onDownload, onNavigateToPaper }: PaperCardProps) {
               <Badge variant="outline">{paper.category}</Badge>
             </div>
 
-            <p className="text-gray-700 mb-4 leading-relaxed">
-              {paper.abstract}
-            </p>
+            <p className="text-gray-700 mb-4 leading-relaxed">{paper.abstract}</p>
 
             <div className="flex flex-wrap items-center gap-2 mb-4">
               {paper.tags.map((tag, tagIndex) => (
@@ -164,19 +168,11 @@ function PaperCard({ paper, onDownload, onNavigateToPaper }: PaperCardProps) {
               </div>
 
               <div className="flex items-center gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={handleDownload}
-                >
+                <Button variant="outline" size="sm" onClick={handleDownload}>
                   <Download className="w-4 h-4 mr-2" />
                   ダウンロード
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => onNavigateToPaper?.(paper.id)}
-                >
+                <Button variant="outline" size="sm" onClick={() => onNavigateToPaper?.(paper.id)}>
                   詳細
                 </Button>
               </div>

@@ -23,7 +23,7 @@ export function transformPaper(paper: ResearchPaper) {
     downloads: paper.downloads,
     likes: paper.likes,
     comments: paper.comments,
-    verified: paper.verified,
+    verified: paper.verified
   };
 }
 
@@ -43,7 +43,7 @@ export function transformSeminar(seminar: Seminar) {
     tags: seminar.tags,
     activeProjects: 0,
     publications: 0,
-    openForCollaboration: seminar.openForCollaboration,
+    openForCollaboration: seminar.openForCollaboration
   };
 }
 
@@ -62,7 +62,7 @@ export function transformProject(project: Project) {
     members: project.members,
     leader: project.leader,
     tags: project.tags,
-    funding: project.funding,
+    funding: project.funding
   };
 }
 
@@ -92,6 +92,6 @@ export function transformForSearch(options: {
   return {
     papers: options.papers ? transformPapers(options.papers) : [],
     seminars: options.seminars ? transformSeminars(options.seminars) : [],
-    projects: options.projects ? transformProjects(options.projects) : [],
+    projects: options.projects ? transformProjects(options.projects) : []
   };
 }

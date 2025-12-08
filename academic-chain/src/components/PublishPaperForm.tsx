@@ -1,5 +1,12 @@
 import { useState, useCallback } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from './ui/dialog';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
 import { Input } from './ui/input';
@@ -39,7 +46,7 @@ const CATEGORIES = [
   '数学',
   '物理学',
   '化学',
-  'その他',
+  'その他'
 ];
 
 /**
@@ -60,31 +67,34 @@ export function PublishPaperForm({ isOpen, onClose, onPublish }: PublishPaperFor
     tags: '',
     doi: '',
     accessType: 'open' as 'open' | 'restricted',
-    fileName: '',
+    fileName: ''
   });
 
   // フォーム入力変更
   const handleInputChange = useCallback((field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   }, []);
 
   // ファイル選択
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!file.name.toLowerCase().endsWith('.pdf')) {
-        toast.error('PDFファイルを選択してください');
-        return;
+  const handleFileSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        if (!file.name.toLowerCase().endsWith('.pdf')) {
+          toast.error('PDFファイルを選択してください');
+          return;
+        }
+        if (file.size > 50 * 1024 * 1024) {
+          toast.error('ファイルサイズは50MB以下にしてください');
+          return;
+        }
+        setPdfFile(file);
+        handleInputChange('fileName', file.name);
+        toast.success(`${file.name} を選択しました`);
       }
-      if (file.size > 50 * 1024 * 1024) {
-        toast.error('ファイルサイズは50MB以下にしてください');
-        return;
-      }
-      setPdfFile(file);
-      handleInputChange('fileName', file.name);
-      toast.success(`${file.name} を選択しました`);
-    }
-  }, [handleInputChange]);
+    },
+    [handleInputChange]
+  );
 
   // バリデーション
   const validateForm = useCallback((): boolean => {
@@ -138,7 +148,7 @@ export function PublishPaperForm({ isOpen, onClose, onPublish }: PublishPaperFor
     setIsSubmitting(true);
     try {
       await onPublish({ ...formData, pdfFile: pdfFile || undefined });
-      
+
       // フォームリセット
       setFormData({
         title: '',
@@ -150,7 +160,7 @@ export function PublishPaperForm({ isOpen, onClose, onPublish }: PublishPaperFor
         tags: '',
         doi: '',
         accessType: 'open',
-        fileName: '',
+        fileName: ''
       });
       setPdfFile(null);
       setUploadProgress(0);
@@ -168,9 +178,7 @@ export function PublishPaperForm({ isOpen, onClose, onPublish }: PublishPaperFor
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>論文を公開</DialogTitle>
-          <DialogDescription>
-            研究成果をブロックチェーンで永続的に記録
-          </DialogDescription>
+          <DialogDescription>研究成果をブロックチェーンで永続的に記録</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -235,7 +243,10 @@ export function PublishPaperForm({ isOpen, onClose, onPublish }: PublishPaperFor
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="category">研究分野 *</Label>
-              <Select value={formData.category} onValueChange={(value: string) => handleInputChange('category', value)}>
+              <Select
+                value={formData.category}
+                onValueChange={(value: string) => handleInputChange('category', value)}
+              >
                 <SelectTrigger id="category">
                   <SelectValue placeholder="選択してください" />
                 </SelectTrigger>
@@ -250,7 +261,10 @@ export function PublishPaperForm({ isOpen, onClose, onPublish }: PublishPaperFor
             </div>
             <div>
               <Label htmlFor="access">アクセス権限</Label>
-              <Select value={formData.accessType} onValueChange={(value: string) => handleInputChange('accessType', value)}>
+              <Select
+                value={formData.accessType}
+                onValueChange={(value: string) => handleInputChange('accessType', value)}
+              >
                 <SelectTrigger id="access">
                   <SelectValue />
                 </SelectTrigger>
@@ -339,7 +353,7 @@ export function PublishPaperForm({ isOpen, onClose, onPublish }: PublishPaperFor
           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
             キャンセル
           </Button>
-          <Button 
+          <Button
             onClick={handleSubmit}
             disabled={isSubmitting}
             className="bg-gradient-to-r from-blue-600 to-indigo-600"

@@ -1,11 +1,32 @@
 import { useCallback, useState, useEffect } from 'react';
-import { ArrowLeft, Heart, MessageSquare, Download, Hash, FileText, Calendar, Award, Share2, ExternalLink, Trash2, Send } from 'lucide-react';
+import {
+  ArrowLeft,
+  Heart,
+  MessageSquare,
+  Download,
+  Hash,
+  FileText,
+  Calendar,
+  Award,
+  Share2,
+  ExternalLink,
+  Trash2,
+  Send
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Input } from './ui/input';
-import { ResearchPaper, deletePaperFromStorage, togglePaperLike, getCommentsForPaper, addCommentToPaper, deleteComment, Comment } from '../hooks/useData';
+import {
+  ResearchPaper,
+  deletePaperFromStorage,
+  togglePaperLike,
+  getCommentsForPaper,
+  addCommentToPaper,
+  deleteComment,
+  Comment
+} from '../hooks/useData';
 
 interface PaperDetailProps {
   paper: ResearchPaper;
@@ -54,13 +75,15 @@ export function PaperDetail({ paper, onBack, onLike, onDownload, onDelete }: Pap
       document.body.removeChild(link);
     }
     // ダウンロード数をインクリメント
-    setDownloads(prev => prev + 1);
+    setDownloads((prev) => prev + 1);
     // コールバックがあれば実行
     onDownload?.(paper.id);
   }, [paper.id, paper.pdfUrl, paper.title, onDownload]);
 
   const handleDelete = useCallback(() => {
-    if (confirm('この論文を削除してもよろしいですか？（ブロックチェーン上の記録は削除されません）')) {
+    if (
+      confirm('この論文を削除してもよろしいですか？（ブロックチェーン上の記録は削除されません）')
+    ) {
       deletePaperFromStorage(paper.id);
       onDelete?.(paper.id);
       onBack();
@@ -91,14 +114,14 @@ export function PaperDetail({ paper, onBack, onLike, onDownload, onDelete }: Pap
 
   const handleSubmitComment = useCallback(async () => {
     if (!commentText.trim()) return;
-    
+
     setIsSubmittingComment(true);
     try {
       // コメント追加
       const newComment = addCommentToPaper(paper.id, 'ユーザー', commentText);
       // UI を更新
-      setPaperComments(prev => [newComment, ...prev]);
-      setComments(prev => prev + 1);
+      setPaperComments((prev) => [newComment, ...prev]);
+      setComments((prev) => prev + 1);
       setCommentText('');
       onLike?.(paper.id); // refreshTrigger を発火させるため
     } catch (error) {
@@ -108,22 +131,20 @@ export function PaperDetail({ paper, onBack, onLike, onDownload, onDelete }: Pap
     }
   }, [commentText, paper.id, onLike]);
 
-  const handleDeleteComment = useCallback((commentId: string) => {
-    deleteComment(commentId, paper.id);
-    setPaperComments(prev => prev.filter(c => c.id !== commentId));
-    setComments(prev => Math.max(0, prev - 1));
-  }, [paper.id]);
+  const handleDeleteComment = useCallback(
+    (commentId: string) => {
+      deleteComment(commentId, paper.id);
+      setPaperComments((prev) => prev.filter((c) => c.id !== commentId));
+      setComments((prev) => Math.max(0, prev - 1));
+    },
+    [paper.id]
+  );
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header with Back Button */}
       <div className="flex items-center gap-4">
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={onBack}
-          className="gap-2"
-        >
+        <Button variant="outline" size="sm" onClick={onBack} className="gap-2">
           <ArrowLeft className="w-4 h-4" />
           戻る
         </Button>
@@ -138,9 +159,7 @@ export function PaperDetail({ paper, onBack, onLike, onDownload, onDelete }: Pap
           {/* Title Section */}
           <div className="space-y-3">
             <div className="flex items-start justify-between gap-4">
-              <h1 className="text-3xl font-bold text-gray-900 flex-1">
-                {paper.title}
-              </h1>
+              <h1 className="text-3xl font-bold text-gray-900 flex-1">{paper.title}</h1>
               {paper.verified && (
                 <Badge className="bg-green-50 text-green-700 border-green-200 whitespace-nowrap">
                   ✓ 検証済
@@ -186,9 +205,7 @@ export function PaperDetail({ paper, onBack, onLike, onDownload, onDelete }: Pap
           {/* Abstract */}
           <div className="space-y-2">
             <h2 className="text-lg font-semibold text-gray-900">アブストラクト</h2>
-            <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-              {paper.abstract}
-            </p>
+            <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{paper.abstract}</p>
           </div>
 
           {/* Keywords */}
@@ -271,27 +288,18 @@ export function PaperDetail({ paper, onBack, onLike, onDownload, onDelete }: Pap
 
           {/* Action Buttons */}
           <div className="flex flex-col md:flex-row gap-3 pt-4">
-            <Button 
-              className="flex-1 bg-red-600 hover:bg-red-700"
-              onClick={handleLike}
-            >
+            <Button className="flex-1 bg-red-600 hover:bg-red-700" onClick={handleLike}>
               <Heart className="w-4 h-4 mr-2" />
               いいね ({likes})
             </Button>
-            <Button 
-              className="flex-1 bg-blue-600 hover:bg-blue-700"
-              onClick={handleDownload}
-            >
+            <Button className="flex-1 bg-blue-600 hover:bg-blue-700" onClick={handleDownload}>
               <Download className="w-4 h-4 mr-2" />
               ダウンロード
             </Button>
-            
+
             {/* Share Dropdown */}
             <div className="relative group flex-1">
-              <Button 
-                variant="outline"
-                className="w-full"
-              >
+              <Button variant="outline" className="w-full">
                 <Share2 className="w-4 h-4 mr-2" />
                 共有
               </Button>
@@ -316,17 +324,13 @@ export function PaperDetail({ paper, onBack, onLike, onDownload, onDelete }: Pap
                 </button>
               </div>
             </div>
-            
-            <Button 
-              variant="outline"
-              className="flex-1"
-              onClick={handleViewOnline}
-            >
+
+            <Button variant="outline" className="flex-1" onClick={handleViewOnline}>
               <ExternalLink className="w-4 h-4 mr-2" />
               オンラインで表示
             </Button>
 
-            <Button 
+            <Button
               variant="outline"
               className="flex-1 text-red-600 hover:bg-red-50"
               onClick={handleDelete}
@@ -348,7 +352,7 @@ export function PaperDetail({ paper, onBack, onLike, onDownload, onDelete }: Pap
                   <AvatarFallback className="bg-blue-500 text-white">U</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 flex gap-2">
-                  <Input 
+                  <Input
                     placeholder="コメントを追加..."
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
@@ -359,7 +363,7 @@ export function PaperDetail({ paper, onBack, onLike, onDownload, onDelete }: Pap
                     }}
                     disabled={isSubmittingComment}
                   />
-                  <Button 
+                  <Button
                     size="sm"
                     onClick={handleSubmitComment}
                     disabled={!commentText.trim() || isSubmittingComment}
@@ -384,13 +388,15 @@ export function PaperDetail({ paper, onBack, onLike, onDownload, onDelete }: Pap
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <div className="text-sm font-semibold text-gray-900">{comment.author}</div>
+                            <div className="text-sm font-semibold text-gray-900">
+                              {comment.author}
+                            </div>
                             <div className="text-xs text-gray-600">
                               {new Date(comment.timestamp).toLocaleDateString('ja-JP')}
                             </div>
                           </div>
                         </div>
-                        <Button 
+                        <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDeleteComment(comment.id)}
@@ -420,9 +426,7 @@ export function PaperDetail({ paper, onBack, onLike, onDownload, onDelete }: Pap
           <CardTitle>同じ分野の論文</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center text-gray-500 py-8">
-            関連論文はまだロードされていません
-          </div>
+          <div className="text-center text-gray-500 py-8">関連論文はまだロードされていません</div>
         </CardContent>
       </Card>
     </div>

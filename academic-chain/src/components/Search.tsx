@@ -1,5 +1,24 @@
 import { useState, useEffect } from 'react';
-import { Search as SearchIcon, Filter, X, Calendar, MapPin, Award, Hash, FileText, Users, Briefcase, Vote, TrendingUp, Download, Heart, MessageSquare, ExternalLink, UserPlus, ThumbsUp } from 'lucide-react';
+import {
+  Search as SearchIcon,
+  Filter,
+  X,
+  Calendar,
+  MapPin,
+  Award,
+  Hash,
+  FileText,
+  Users,
+  Briefcase,
+  Vote,
+  TrendingUp,
+  Download,
+  Heart,
+  MessageSquare,
+  ExternalLink,
+  UserPlus,
+  ThumbsUp
+} from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -41,7 +60,7 @@ export function Search({ initialQuery = '', onQueryChange, onNavigateToPaper }: 
   const { papers, seminars, projects } = transformForSearch({
     papers: fetchedPapers,
     seminars: fetchedSeminars,
-    projects: fetchedProjects,
+    projects: fetchedProjects
   });
 
   const proposals: any[] = [];
@@ -49,10 +68,10 @@ export function Search({ initialQuery = '', onQueryChange, onNavigateToPaper }: 
   // Filter function for search query matching
   const matchesSearchQuery = (item: any): boolean => {
     if (!searchQuery.trim()) return true;
-    
+
     const query = searchQuery.toLowerCase();
     const searchFields: string[] = [];
-    
+
     // Collect searchable fields based on item type
     if (item.type === 'paper') {
       searchFields.push(
@@ -90,11 +109,9 @@ export function Search({ initialQuery = '', onQueryChange, onNavigateToPaper }: 
         item.category || ''
       );
     }
-    
+
     // Check if any field contains the search query (partial match)
-    return searchFields.some(field => 
-      field.toLowerCase().includes(query)
-    );
+    return searchFields.some((field) => field.toLowerCase().includes(query));
   };
 
   // Apply search filter
@@ -102,8 +119,13 @@ export function Search({ initialQuery = '', onQueryChange, onNavigateToPaper }: 
   const filteredSeminars = seminars.filter(matchesSearchQuery);
   const filteredProjects = projects.filter(matchesSearchQuery);
   const filteredProposals = proposals.filter(matchesSearchQuery);
-  
-  const allResults = [...filteredPapers, ...filteredSeminars, ...filteredProjects, ...filteredProposals];
+
+  const allResults = [
+    ...filteredPapers,
+    ...filteredSeminars,
+    ...filteredProjects,
+    ...filteredProposals
+  ];
 
   const categories = [
     'コンピュータサイエンス',
@@ -111,7 +133,7 @@ export function Search({ initialQuery = '', onQueryChange, onNavigateToPaper }: 
     '量子情報科学',
     'エネルギー工学',
     '生命科学',
-    '都市工学',
+    '都市工学'
   ];
 
   const universities = [
@@ -120,22 +142,18 @@ export function Search({ initialQuery = '', onQueryChange, onNavigateToPaper }: 
     '大阪大学',
     '早稲田大学',
     '慶應義塾大学',
-    '東京工業大学',
+    '東京工業大学'
   ];
 
   const toggleCategory = (category: string) => {
-    setSelectedCategories(prev =>
-      prev.includes(category)
-        ? prev.filter(c => c !== category)
-        : [...prev, category]
+    setSelectedCategories((prev) =>
+      prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category]
     );
   };
 
   const toggleUniversity = (university: string) => {
-    setSelectedUniversities(prev =>
-      prev.includes(university)
-        ? prev.filter(u => u !== university)
-        : [...prev, university]
+    setSelectedUniversities((prev) =>
+      prev.includes(university) ? prev.filter((u) => u !== university) : [...prev, university]
     );
   };
 
@@ -149,7 +167,7 @@ export function Search({ initialQuery = '', onQueryChange, onNavigateToPaper }: 
     active: { label: '進行中', color: 'bg-green-50 text-green-700 border-green-200' },
     planning: { label: '計画中', color: 'bg-blue-50 text-blue-700 border-blue-200' },
     completed: { label: '完了', color: 'bg-gray-50 text-gray-700 border-gray-200' },
-    passed: { label: '可決', color: 'bg-green-50 text-green-700 border-green-200' },
+    passed: { label: '可決', color: 'bg-green-50 text-green-700 border-green-200' }
   };
 
   return (
@@ -185,11 +203,7 @@ export function Search({ initialQuery = '', onQueryChange, onNavigateToPaper }: 
 
         {/* Filter Toggle & Quick Stats */}
         <div className="flex items-center justify-between">
-          <Button
-            variant="outline"
-            onClick={() => setShowFilters(!showFilters)}
-            className="gap-2"
-          >
+          <Button variant="outline" onClick={() => setShowFilters(!showFilters)} className="gap-2">
             <Filter className="w-4 h-4" />
             フィルター
             {(selectedCategories.length > 0 || selectedUniversities.length > 0) && (
@@ -201,7 +215,9 @@ export function Search({ initialQuery = '', onQueryChange, onNavigateToPaper }: 
 
           <div className="flex items-center gap-4 text-sm text-gray-600">
             <span>{allResults.length}件の結果</span>
-            {(selectedCategories.length > 0 || selectedUniversities.length > 0 || dateRange !== 'all') && (
+            {(selectedCategories.length > 0 ||
+              selectedUniversities.length > 0 ||
+              dateRange !== 'all') && (
               <Button variant="ghost" size="sm" onClick={clearFilters}>
                 フィルターをクリア
               </Button>
@@ -253,10 +269,7 @@ export function Search({ initialQuery = '', onQueryChange, onNavigateToPaper }: 
                         checked={selectedCategories.includes(category)}
                         onCheckedChange={() => toggleCategory(category)}
                       />
-                      <Label
-                        htmlFor={`cat-${category}`}
-                        className="text-sm cursor-pointer flex-1"
-                      >
+                      <Label htmlFor={`cat-${category}`} className="text-sm cursor-pointer flex-1">
                         {category}
                       </Label>
                     </div>
@@ -295,30 +308,23 @@ export function Search({ initialQuery = '', onQueryChange, onNavigateToPaper }: 
         <div className="flex-1">
           <Tabs defaultValue="all" className="space-y-4">
             <TabsList>
-              <TabsTrigger value="all">
-                すべて ({allResults.length})
-              </TabsTrigger>
-              <TabsTrigger value="papers">
-                論文 ({filteredPapers.length})
-              </TabsTrigger>
-              <TabsTrigger value="seminars">
-                研究室 ({filteredSeminars.length})
-              </TabsTrigger>
-              <TabsTrigger value="projects">
-                プロジェクト ({filteredProjects.length})
-              </TabsTrigger>
-              <TabsTrigger value="proposals">
-                提案 ({filteredProposals.length})
-              </TabsTrigger>
+              <TabsTrigger value="all">すべて ({allResults.length})</TabsTrigger>
+              <TabsTrigger value="papers">論文 ({filteredPapers.length})</TabsTrigger>
+              <TabsTrigger value="seminars">研究室 ({filteredSeminars.length})</TabsTrigger>
+              <TabsTrigger value="projects">プロジェクト ({filteredProjects.length})</TabsTrigger>
+              <TabsTrigger value="proposals">提案 ({filteredProposals.length})</TabsTrigger>
             </TabsList>
 
             {/* All Results */}
             <TabsContent value="all" className="space-y-4">
               {allResults.map((item) => {
                 if (item.type === 'paper') {
-                  const paper = item as typeof papers[0];
+                  const paper = item as (typeof papers)[0];
                   return (
-                    <Card key={`${paper.type}-${paper.id}`} className="hover:shadow-md transition-shadow">
+                    <Card
+                      key={`${paper.type}-${paper.id}`}
+                      className="hover:shadow-md transition-shadow"
+                    >
                       <CardContent className="p-6">
                         <div className="flex gap-4">
                           <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -328,10 +334,15 @@ export function Search({ initialQuery = '', onQueryChange, onNavigateToPaper }: 
                             <div className="flex items-start justify-between gap-4 mb-2">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <Badge variant="outline" className="text-xs">論文</Badge>
+                                  <Badge variant="outline" className="text-xs">
+                                    論文
+                                  </Badge>
                                   <h3 className="text-gray-900">{paper.title}</h3>
                                   {paper.verified && (
-                                    <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
+                                    <Badge
+                                      variant="secondary"
+                                      className="bg-green-50 text-green-700 border-green-200"
+                                    >
                                       検証済
                                     </Badge>
                                   )}
@@ -364,10 +375,7 @@ export function Search({ initialQuery = '', onQueryChange, onNavigateToPaper }: 
                                   {paper.comments}
                                 </div>
                               </div>
-                              <Button 
-                                size="sm"
-                                onClick={() => onNavigateToPaper?.(paper.id)}
-                              >
+                              <Button size="sm" onClick={() => onNavigateToPaper?.(paper.id)}>
                                 詳細を見る
                                 <ExternalLink className="w-4 h-4 ml-2" />
                               </Button>
@@ -380,9 +388,12 @@ export function Search({ initialQuery = '', onQueryChange, onNavigateToPaper }: 
                 }
 
                 if (item.type === 'seminar') {
-                  const seminar = item as typeof seminars[0];
+                  const seminar = item as (typeof seminars)[0];
                   return (
-                    <Card key={`${seminar.type}-${seminar.id}`} className="hover:shadow-md transition-shadow">
+                    <Card
+                      key={`${seminar.type}-${seminar.id}`}
+                      className="hover:shadow-md transition-shadow"
+                    >
                       <CardContent className="p-6">
                         <div className="flex gap-4">
                           <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -392,7 +403,9 @@ export function Search({ initialQuery = '', onQueryChange, onNavigateToPaper }: 
                             <div className="flex items-start justify-between gap-4 mb-2">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <Badge variant="outline" className="text-xs">研究室</Badge>
+                                  <Badge variant="outline" className="text-xs">
+                                    研究室
+                                  </Badge>
                                   <h3 className="text-gray-900">{seminar.name}</h3>
                                   {seminar.openForCollaboration && (
                                     <Badge className="bg-green-50 text-green-700 border-green-200">
@@ -431,9 +444,12 @@ export function Search({ initialQuery = '', onQueryChange, onNavigateToPaper }: 
                 }
 
                 if (item.type === 'project') {
-                  const project = item as typeof projects[0];
+                  const project = item as (typeof projects)[0];
                   return (
-                    <Card key={`${project.type}-${project.id}`} className="hover:shadow-md transition-shadow">
+                    <Card
+                      key={`${project.type}-${project.id}`}
+                      className="hover:shadow-md transition-shadow"
+                    >
                       <CardContent className="p-6">
                         <div className="flex gap-4">
                           <div className="w-10 h-10 bg-green-50 text-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -443,9 +459,14 @@ export function Search({ initialQuery = '', onQueryChange, onNavigateToPaper }: 
                             <div className="flex items-start justify-between gap-4 mb-2">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <Badge variant="outline" className="text-xs">プロジェクト</Badge>
+                                  <Badge variant="outline" className="text-xs">
+                                    プロジェクト
+                                  </Badge>
                                   <h3 className="text-gray-900">{project.title}</h3>
-                                  <Badge variant="secondary" className={statusConfig[project.status]?.color}>
+                                  <Badge
+                                    variant="secondary"
+                                    className={statusConfig[project.status]?.color}
+                                  >
                                     {statusConfig[project.status]?.label}
                                   </Badge>
                                 </div>
@@ -480,9 +501,12 @@ export function Search({ initialQuery = '', onQueryChange, onNavigateToPaper }: 
                 }
 
                 if (item.type === 'proposal') {
-                  const proposal = item as typeof proposals[0];
+                  const proposal = item as (typeof proposals)[0];
                   return (
-                    <Card key={`${proposal.type}-${proposal.id}`} className="hover:shadow-md transition-shadow">
+                    <Card
+                      key={`${proposal.type}-${proposal.id}`}
+                      className="hover:shadow-md transition-shadow"
+                    >
                       <CardContent className="p-6">
                         <div className="flex gap-4">
                           <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -492,9 +516,14 @@ export function Search({ initialQuery = '', onQueryChange, onNavigateToPaper }: 
                             <div className="flex items-start justify-between gap-4 mb-2">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <Badge variant="outline" className="text-xs">DAO提案</Badge>
+                                  <Badge variant="outline" className="text-xs">
+                                    DAO提案
+                                  </Badge>
                                   <h3 className="text-gray-900">{proposal.title}</h3>
-                                  <Badge variant="secondary" className={statusConfig[proposal.status]?.color}>
+                                  <Badge
+                                    variant="secondary"
+                                    className={statusConfig[proposal.status]?.color}
+                                  >
                                     {statusConfig[proposal.status]?.label}
                                   </Badge>
                                 </div>

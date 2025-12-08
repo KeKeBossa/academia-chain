@@ -3,6 +3,7 @@
 ## 📍 遷移フロー
 
 ### 1. **ダッシュボード（Dashboard）** → 論文詳細
+
 ```
 Dashboard
   └─ 「詳細を見る」ボタン
@@ -14,24 +15,21 @@ Dashboard
 ```
 
 **実装場所**: `Dashboard.tsx` Line 172-174
+
 ```tsx
-<Button 
-  onClick={() => onNavigateToPaper?.(paper.id)}
->
-  詳細を見る
-</Button>
+<Button onClick={() => onNavigateToPaper?.(paper.id)}>詳細を見る</Button>
 ```
 
 **親コンポーネント**: `App.tsx`
+
 ```tsx
-<Dashboard 
-  onNavigateToPaper={(paperId) => navigateToPaperDetail(paperId)}
-/>
+<Dashboard onNavigateToPaper={(paperId) => navigateToPaperDetail(paperId)} />
 ```
 
 ---
 
 ### 2. **リポジトリ（Repository）** → 論文詳細
+
 ```
 Repository
   └─ PaperList コンポーネント
@@ -42,24 +40,21 @@ Repository
 ```
 
 **実装場所**: `PaperList.tsx` Line 178
+
 ```tsx
-<Button 
-  onClick={() => onNavigateToPaper?.(paper.id)}
->
-  詳細を見る
-</Button>
+<Button onClick={() => onNavigateToPaper?.(paper.id)}>詳細を見る</Button>
 ```
 
 **親コンポーネント**: `App.tsx`
+
 ```tsx
-<Repository 
-  onNavigateToPaper={(paperId) => navigateToPaperDetail(paperId)}
-/>
+<Repository onNavigateToPaper={(paperId) => navigateToPaperDetail(paperId)} />
 ```
 
 ---
 
 ### 3. **検索結果（Search）** → 詳細ページ
+
 ```
 Search
   ├─ 論文検索結果
@@ -75,7 +70,8 @@ Search
            └─ TODO: 実装必要
 ```
 
-**現在の状態**: 
+**現在の状態**:
+
 - ✅ 論文検索結果 → 論文詳細ページへ遷移可能
 - ⚠️ プロジェクト詳細 → 未実装
 - ⚠️ ゼミ詳細 → 未実装
@@ -83,6 +79,7 @@ Search
 ---
 
 ### 4. **プロジェクト（Projects）** → 詳細ページ
+
 ```
 Projects
   └─ 「詳細を見る」ボタン (Line 434)
@@ -95,6 +92,7 @@ Projects
 ---
 
 ### 5. **ゼミ・研究室（Seminars）** → 詳細ページ
+
 ```
 Seminars
   └─ 「詳細を見る」ボタン
@@ -109,56 +107,61 @@ Seminars
 ## 🔄 App.tsx での遷移ハンドリング
 
 ### `navigateToPaperDetail()` 関数
+
 ```typescript
 // 論文詳細ページへナビゲート
-const navigateToPaperDetail = useCallback((paperId: string) => {
-  const prevTab = activeTab;
-  setSelectedPaperId(paperId);
-  setActiveTab('paperDetail');
-  
-  // ブラウザ履歴に状態を記録
-  window.history.pushState(
-    { tab: 'paperDetail', paperId, previousTab: prevTab }, 
-    '', 
-    window.location.href
-  );
-}, [activeTab]);
+const navigateToPaperDetail = useCallback(
+  (paperId: string) => {
+    const prevTab = activeTab;
+    setSelectedPaperId(paperId);
+    setActiveTab('paperDetail');
+
+    // ブラウザ履歴に状態を記録
+    window.history.pushState(
+      { tab: 'paperDetail', paperId, previousTab: prevTab },
+      '',
+      window.location.href
+    );
+  },
+  [activeTab]
+);
 ```
 
 ### `handleTabChange()` 関数
+
 ```typescript
-const handleTabChange = useCallback((newTab: TabType) => {
-  if (newTab !== activeTab) {
-    const prevTab = activeTab;
-    setActiveTab(newTab);
-    window.history.pushState(
-      { tab: newTab, previousTab: prevTab }, 
-      '', 
-      window.location.href
-    );
-  }
-}, [activeTab]);
+const handleTabChange = useCallback(
+  (newTab: TabType) => {
+    if (newTab !== activeTab) {
+      const prevTab = activeTab;
+      setActiveTab(newTab);
+      window.history.pushState({ tab: newTab, previousTab: prevTab }, '', window.location.href);
+    }
+  },
+  [activeTab]
+);
 ```
 
 ---
 
 ## 📊 遷移先サマリー
 
-| ボタン場所 | 現在の遷移先 | 状態 |
-|----------|----------|------|
-| ダッシュボード | PaperDetail | ✅ 実装済み |
-| リポジトリ | PaperDetail | ✅ 実装済み |
-| 検索結果（論文） | PaperDetail | ✅ 実装済み |
-| 検索結果（プロジェクト） | ❌ なし | ⚠️ 未実装 |
-| 検索結果（ゼミ） | ❌ なし | ⚠️ 未実装 |
-| プロジェクト | ❌ なし | ⚠️ 未実装 |
-| ゼミ・研究室 | ❌ なし | ⚠️ 未実装 |
+| ボタン場所               | 現在の遷移先 | 状態        |
+| ------------------------ | ------------ | ----------- |
+| ダッシュボード           | PaperDetail  | ✅ 実装済み |
+| リポジトリ               | PaperDetail  | ✅ 実装済み |
+| 検索結果（論文）         | PaperDetail  | ✅ 実装済み |
+| 検索結果（プロジェクト） | ❌ なし      | ⚠️ 未実装   |
+| 検索結果（ゼミ）         | ❌ なし      | ⚠️ 未実装   |
+| プロジェクト             | ❌ なし      | ⚠️ 未実装   |
+| ゼミ・研究室             | ❌ なし      | ⚠️ 未実装   |
 
 ---
 
 ## 🎯 次のステップ
 
 ### 1️⃣ プロジェクト詳細ページ実装
+
 ```tsx
 // App.tsx に新しいタブタイプを追加
 type TabType = '...' | 'projectDetail';
@@ -167,26 +170,32 @@ type TabType = '...' | 'projectDetail';
 const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
 // Projects コンポーネントにハンドラーを渡す
-<Projects onNavigateToProject={(projectId) => {
-  setSelectedProjectId(projectId);
-  setActiveTab('projectDetail');
-}} />
+<Projects
+  onNavigateToProject={(projectId) => {
+    setSelectedProjectId(projectId);
+    setActiveTab('projectDetail');
+  }}
+/>;
 ```
 
 ### 2️⃣ ゼミ詳細ページ実装
+
 ```tsx
 // 同様に Seminars コンポーネント用を実装
 type TabType = '...' | 'seminarDetail';
 
 const [selectedSeminarId, setSelectedSeminarId] = useState<string | null>(null);
 
-<Seminars onNavigateToSeminar={(seminarId) => {
-  setSelectedSeminarId(seminarId);
-  setActiveTab('seminarDetail');
-}} />
+<Seminars
+  onNavigateToSeminar={(seminarId) => {
+    setSelectedSeminarId(seminarId);
+    setActiveTab('seminarDetail');
+  }}
+/>;
 ```
 
 ### 3️⃣ 各詳細コンポーネントを作成
+
 - `ProjectDetail.tsx`
 - `SeminarDetail.tsx`
 
@@ -198,7 +207,7 @@ const [selectedSeminarId, setSelectedSeminarId] = useState<string | null>(null);
 
 ```tsx
 // 親コンポーネント（App.tsx）
-<Component 
+<Component
   onNavigateTo[Item]={(id) => {
     setSelected[Item]Id(id);
     setActiveTab('[item]Detail');
@@ -211,9 +220,9 @@ const [selectedSeminarId, setSelectedSeminarId] = useState<string | null>(null);
 />
 
 // 詳細画面
-export function [Item]Detail({ 
-  data, 
-  onBack 
+export function [Item]Detail({
+  data,
+  onBack
 }: [Item]DetailProps) {
   return (
     <div>

@@ -1,5 +1,24 @@
 import { useState } from 'react';
-import { Settings as SettingsIcon, Wallet, Bell, Shield, Globe, Database, Monitor, ChevronRight, Check, Mail, Lock, Eye, EyeOff, Download, Trash2, LogOut, Key, Smartphone } from 'lucide-react';
+import {
+  Settings as SettingsIcon,
+  Wallet,
+  Bell,
+  Shield,
+  Globe,
+  Database,
+  Monitor,
+  ChevronRight,
+  Check,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  Download,
+  Trash2,
+  LogOut,
+  Key,
+  Smartphone
+} from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -9,7 +28,11 @@ import { Label } from './ui/label';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Separator } from './ui/separator';
-import { createToastHandler, createAsyncToastHandler, createToggleToastHandler } from '../utils/toast';
+import {
+  createToastHandler,
+  createAsyncToastHandler,
+  createToggleToastHandler
+} from '../utils/toast';
 
 export function Settings() {
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -119,9 +142,7 @@ export function Settings() {
           <Card>
             <CardHeader>
               <CardTitle>メールアドレス</CardTitle>
-              <CardDescription>
-                通知の受信とアカウント復旧に使用されます
-              </CardDescription>
+              <CardDescription>通知の受信とアカウント復旧に使用されます</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3">
@@ -142,12 +163,14 @@ export function Settings() {
           <Card>
             <CardHeader>
               <CardTitle>アカウント管理</CardTitle>
-              <CardDescription>
-                データのエクスポートやアカウントの削除
-              </CardDescription>
+              <CardDescription>データのエクスポートやアカウントの削除</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button variant="outline" className="w-full justify-between" onClick={handleExportData}>
+              <Button
+                variant="outline"
+                className="w-full justify-between"
+                onClick={handleExportData}
+              >
                 <span className="flex items-center gap-2">
                   <Download className="w-4 h-4" />
                   データをエクスポート
@@ -155,7 +178,10 @@ export function Settings() {
                 <ChevronRight className="w-4 h-4" />
               </Button>
               <Separator />
-              <Button variant="outline" className="w-full justify-between text-red-600 hover:bg-red-50">
+              <Button
+                variant="outline"
+                className="w-full justify-between text-red-600 hover:bg-red-50"
+              >
                 <span className="flex items-center gap-2">
                   <Trash2 className="w-4 h-4" />
                   アカウントを削除
@@ -174,9 +200,7 @@ export function Settings() {
           <Card>
             <CardHeader>
               <CardTitle>通知設定</CardTitle>
-              <CardDescription>
-                受け取りたい通知の種類を選択してください
-              </CardDescription>
+              <CardDescription>受け取りたい通知の種類を選択してください</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
@@ -284,18 +308,21 @@ export function Settings() {
           <Card>
             <CardHeader>
               <CardTitle>プライバシー設定</CardTitle>
-              <CardDescription>
-                プロフィールと研究活動の公開範囲を管理
-              </CardDescription>
+              <CardDescription>プロフィールと研究活動の公開範囲を管理</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <Label htmlFor="profile-public" className="cursor-pointer flex items-center gap-2">
+                  <Label
+                    htmlFor="profile-public"
+                    className="cursor-pointer flex items-center gap-2"
+                  >
                     <Eye className="w-4 h-4" />
                     プロフィールを公開
                   </Label>
-                  <p className="text-sm text-gray-500">他のユーザーがあなたのプロフィールを閲覧可能</p>
+                  <p className="text-sm text-gray-500">
+                    他のユーザーがあなたのプロフィールを閲覧可能
+                  </p>
                 </div>
                 <Switch
                   id="profile-public"
@@ -308,7 +335,10 @@ export function Settings() {
 
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <Label htmlFor="research-public" className="cursor-pointer flex items-center gap-2">
+                  <Label
+                    htmlFor="research-public"
+                    className="cursor-pointer flex items-center gap-2"
+                  >
                     <Eye className="w-4 h-4" />
                     研究活動を公開
                   </Label>
@@ -325,7 +355,10 @@ export function Settings() {
 
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <Label htmlFor="show-in-search" className="cursor-pointer flex items-center gap-2">
+                  <Label
+                    htmlFor="show-in-search"
+                    className="cursor-pointer flex items-center gap-2"
+                  >
                     <Globe className="w-4 h-4" />
                     検索結果に表示
                   </Label>
@@ -357,9 +390,7 @@ export function Settings() {
           <Card>
             <CardHeader>
               <CardTitle>ブロックチェーン設定</CardTitle>
-              <CardDescription>
-                使用するネットワークとトランザクション設定
-              </CardDescription>
+              <CardDescription>使用するネットワークとトランザクション設定</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
@@ -391,9 +422,7 @@ export function Settings() {
                     </SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-gray-500 mt-2">
-                  テストネットは開発・テスト用です
-                </p>
+                <p className="text-xs text-gray-500 mt-2">テストネットは開発・テスト用です</p>
               </div>
 
               <Separator />
@@ -406,7 +435,10 @@ export function Settings() {
                     <div className="text-sm">低速</div>
                     <div className="text-xs text-gray-500">~30分</div>
                   </Button>
-                  <Button variant="outline" className="flex-col h-auto py-3 border-blue-600 bg-blue-50">
+                  <Button
+                    variant="outline"
+                    className="flex-col h-auto py-3 border-blue-600 bg-blue-50"
+                  >
                     <div className="text-lg mb-1">🚗</div>
                     <div className="text-sm">標準</div>
                     <div className="text-xs text-gray-500">~3分</div>
@@ -448,16 +480,16 @@ export function Settings() {
           <Card>
             <CardHeader>
               <CardTitle>セキュリティ設定</CardTitle>
-              <CardDescription>
-                アカウントのセキュリティを強化
-              </CardDescription>
+              <CardDescription>アカウントのセキュリティを強化</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center gap-3 flex-1">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    twoFactorEnabled ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-600'
-                  }`}>
+                  <div
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      twoFactorEnabled ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-600'
+                    }`}
+                  >
                     <Smartphone className="w-5 h-5" />
                   </div>
                   <div className="flex-1">
@@ -469,12 +501,10 @@ export function Settings() {
                 </div>
                 <div className="flex items-center gap-3">
                   {twoFactorEnabled && (
-                    <Badge className="bg-green-50 text-green-700 border-green-200">
-                      有効
-                    </Badge>
+                    <Badge className="bg-green-50 text-green-700 border-green-200">有効</Badge>
                   )}
                   <Button
-                    variant={twoFactorEnabled ? "outline" : "default"}
+                    variant={twoFactorEnabled ? 'outline' : 'default'}
                     onClick={handleEnable2FA}
                   >
                     {twoFactorEnabled ? '無効化' : '有効化'}
@@ -495,7 +525,10 @@ export function Settings() {
                         <div className="text-xs text-gray-500">東京 • 2時間前</div>
                       </div>
                     </div>
-                    <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
+                    <Badge
+                      variant="secondary"
+                      className="bg-green-50 text-green-700 border-green-200"
+                    >
                       現在のセッション
                     </Badge>
                   </div>
@@ -534,9 +567,7 @@ export function Settings() {
           <Card>
             <CardHeader>
               <CardTitle>表示設定</CardTitle>
-              <CardDescription>
-                言語、テーマ、タイムゾーンの設定
-              </CardDescription>
+              <CardDescription>言語、テーマ、タイムゾーンの設定</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>

@@ -5,7 +5,7 @@
 
 export const API_CONFIG = {
   BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
-  TIMEOUT: 10000,
+  TIMEOUT: 10000
 } as const;
 
 export const API_ENDPOINTS = {
@@ -13,5 +13,5 @@ export const API_ENDPOINTS = {
   NOTIFICATIONS: '/api/notifications',
   EVENTS: '/api/events',
   PROJECTS: '/api/collaboration',
-  SEMINARS: '/api/seminars',
+  SEMINARS: '/api/seminars'
 } as const;

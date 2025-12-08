@@ -1,12 +1,32 @@
 import { useState } from 'react';
-import { Plus, Users, Calendar, Clock, CheckCircle2, AlertCircle, TrendingUp, FileText, MessageSquare, Hash, Link, Shield } from 'lucide-react';
+import {
+  Plus,
+  Users,
+  Calendar,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  TrendingUp,
+  FileText,
+  MessageSquare,
+  Hash,
+  Link,
+  Shield
+} from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Progress } from './ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from './ui/dialog';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
@@ -34,25 +54,46 @@ interface Project {
 }
 
 const researchCategories = [
-  'AI・機械学習', '気候科学・環境', '量子技術', 'ブロックチェーン・Web3',
-  'スマートシティ・IoT', 'バイオテクノロジー', '材料科学', 'エネルギー',
-  '医療・ヘルスケア', '教育工学', 'その他',
+  'AI・機械学習',
+  '気候科学・環境',
+  '量子技術',
+  'ブロックチェーン・Web3',
+  'スマートシティ・IoT',
+  'バイオテクノロジー',
+  '材料科学',
+  'エネルギー',
+  '医療・ヘルスケア',
+  '教育工学',
+  'その他'
 ];
 
 const fundingSources = [
-  '科研費', '民間企業', '大学助成金', '自治体委託',
-  'DAO資金', '国際共同研究', '財団助成', '自己資金',
+  '科研費',
+  '民間企業',
+  '大学助成金',
+  '自治体委託',
+  'DAO資金',
+  '国際共同研究',
+  '財団助成',
+  '自己資金'
 ];
 
 const statusConfig = {
   active: { label: '進行中', color: 'bg-green-50 text-green-700 border-green-200' },
   planning: { label: '計画中', color: 'bg-blue-50 text-blue-700 border-blue-200' },
-  completed: { label: '完了', color: 'bg-gray-50 text-gray-700 border-gray-200' },
+  completed: { label: '完了', color: 'bg-gray-50 text-gray-700 border-gray-200' }
 };
 
 const initialFormState = {
-  title: '', description: '', category: '', startDate: '', endDate: '',
-  universities: '', funding: '', expectedMembers: '5', tags: '',
+  title: '',
+  description: '',
+  category: '',
+  startDate: '',
+  endDate: '',
+  universities: '',
+  funding: '',
+  expectedMembers: '5',
+  tags: ''
 };
 
 const getStoredProjects = (): Project[] => {
@@ -73,25 +114,37 @@ export function Projects() {
 
   const myDAOTokens = 1250;
 
-  const generateBlockchainHash = () => 
+  const generateBlockchainHash = () =>
     '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
 
-  const generateIPFSHash = () => 
-    'Qm' + Array.from({ length: 44 }, () => 'abcdefghijklmnopqrstuvwxyz0123456789'.charAt(Math.floor(Math.random() * 36))).join('');
+  const generateIPFSHash = () =>
+    'Qm' +
+    Array.from({ length: 44 }, () =>
+      'abcdefghijklmnopqrstuvwxyz0123456789'.charAt(Math.floor(Math.random() * 36))
+    ).join('');
 
   const handleCreateProject = () => {
     // Validation
     const validations = [
       { condition: !newProject.title.trim(), message: 'プロジェクトタイトルを入力してください' },
-      { condition: newProject.title.length < 10, message: 'プロジェクトタイトルは10文字以上で入力してください' },
+      {
+        condition: newProject.title.length < 10,
+        message: 'プロジェクトタイトルは10文字以上で入力してください'
+      },
       { condition: !newProject.description.trim(), message: 'プロジェクト説明を入力してください' },
-      { condition: newProject.description.length < 30, message: 'プロジェクト説明は30文字以上で入力してください' },
+      {
+        condition: newProject.description.length < 30,
+        message: 'プロジェクト説明は30文字以上で入力してください'
+      },
       { condition: !newProject.category, message: '研究分野を選択してください' },
       { condition: !newProject.startDate, message: '開始日を選択してください' },
       { condition: !newProject.endDate, message: '終了日を選択してください' },
       { condition: !newProject.universities.trim(), message: '参加予定大学を入力してください' },
       { condition: !newProject.funding, message: '資金源を選択してください' },
-      { condition: !newProject.tags.trim(), message: 'タグを入力してください（カンマ区切りで1つ以上）' },
+      {
+        condition: !newProject.tags.trim(),
+        message: 'タグを入力してください（カンマ区切りで1つ以上）'
+      }
     ];
 
     for (const { condition, message } of validations) {
@@ -127,14 +180,20 @@ export function Projects() {
       progress: 0,
       startDate: newProject.startDate,
       endDate: newProject.endDate,
-      universities: newProject.universities.split(',').map(u => u.trim()).filter(u => u.length > 0),
+      universities: newProject.universities
+        .split(',')
+        .map((u) => u.trim())
+        .filter((u) => u.length > 0),
       members: expectedMembers,
       tasks: { total: 0, completed: 0 },
       papers: 0,
       meetings: 0,
-      tags: newProject.tags.split(',').map(t => t.trim()).filter(t => t.length > 0),
+      tags: newProject.tags
+        .split(',')
+        .map((t) => t.trim())
+        .filter((t) => t.length > 0),
       leader: '田中 太郎',
-      funding: newProject.funding,
+      funding: newProject.funding
     };
 
     setProjects([project, ...projects]);
@@ -161,10 +220,30 @@ export function Projects() {
   };
 
   const statsCards = [
-    { icon: CheckCircle2, color: 'green', label: '進行中', value: projects.filter(p => p.status === 'active').length },
-    { icon: Clock, color: 'blue', label: '計画中', value: projects.filter(p => p.status === 'planning').length },
-    { icon: Users, color: 'purple', label: '総参加者', value: projects.reduce((sum, p) => sum + p.members, 0) },
-    { icon: FileText, color: 'orange', label: '論文発表', value: projects.reduce((sum, p) => sum + p.papers, 0) },
+    {
+      icon: CheckCircle2,
+      color: 'green',
+      label: '進行中',
+      value: projects.filter((p) => p.status === 'active').length
+    },
+    {
+      icon: Clock,
+      color: 'blue',
+      label: '計画中',
+      value: projects.filter((p) => p.status === 'planning').length
+    },
+    {
+      icon: Users,
+      color: 'purple',
+      label: '総参加者',
+      value: projects.reduce((sum, p) => sum + p.members, 0)
+    },
+    {
+      icon: FileText,
+      color: 'orange',
+      label: '論文発表',
+      value: projects.reduce((sum, p) => sum + p.papers, 0)
+    }
   ];
 
   return (
@@ -175,7 +254,7 @@ export function Projects() {
           <h1 className="text-gray-900 mb-2">共同研究プロジェクト</h1>
           <p className="text-gray-600">大学・研究室の枠を超えた共同研究</p>
         </div>
-        <Button 
+        <Button
           className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
           onClick={() => setIsCreateDialogOpen(true)}
         >
@@ -190,7 +269,9 @@ export function Projects() {
           <Card key={index}>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 bg-${color}-50 text-${color}-600 rounded-lg flex items-center justify-center`}>
+                <div
+                  className={`w-10 h-10 bg-${color}-50 text-${color}-600 rounded-lg flex items-center justify-center`}
+                >
                   <Icon className="w-5 h-5" />
                 </div>
                 <div>
@@ -334,31 +415,35 @@ export function Projects() {
 
         <TabsContent value="active">
           <div className="space-y-4">
-            {projects.filter(p => p.status === 'active').map((project) => (
-              <Card key={project.id}>
-                <CardHeader>
-                  <CardTitle>{project.title}</CardTitle>
-                  <CardDescription>{project.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Progress value={project.progress} className="h-2" />
-                  <p className="text-sm text-gray-600 mt-2">{project.progress}% 完了</p>
-                </CardContent>
-              </Card>
-            ))}
+            {projects
+              .filter((p) => p.status === 'active')
+              .map((project) => (
+                <Card key={project.id}>
+                  <CardHeader>
+                    <CardTitle>{project.title}</CardTitle>
+                    <CardDescription>{project.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Progress value={project.progress} className="h-2" />
+                    <p className="text-sm text-gray-600 mt-2">{project.progress}% 完了</p>
+                  </CardContent>
+                </Card>
+              ))}
           </div>
         </TabsContent>
 
         <TabsContent value="planning">
           <div className="space-y-4">
-            {projects.filter(p => p.status === 'planning').map((project) => (
-              <Card key={project.id}>
-                <CardHeader>
-                  <CardTitle>{project.title}</CardTitle>
-                  <CardDescription>{project.description}</CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
+            {projects
+              .filter((p) => p.status === 'planning')
+              .map((project) => (
+                <Card key={project.id}>
+                  <CardHeader>
+                    <CardTitle>{project.title}</CardTitle>
+                    <CardDescription>{project.description}</CardDescription>
+                  </CardHeader>
+                </Card>
+              ))}
           </div>
         </TabsContent>
 
@@ -424,7 +509,12 @@ export function Projects() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="category">研究分野 *</Label>
-                <Select value={newProject.category} onValueChange={(value: string) => setNewProject({ ...newProject, category: value })}>
+                <Select
+                  value={newProject.category}
+                  onValueChange={(value: string) =>
+                    setNewProject({ ...newProject, category: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="研究分野を選択" />
                   </SelectTrigger>
@@ -440,7 +530,12 @@ export function Projects() {
 
               <div>
                 <Label htmlFor="funding">資金源 *</Label>
-                <Select value={newProject.funding} onValueChange={(value: string) => setNewProject({ ...newProject, funding: value })}>
+                <Select
+                  value={newProject.funding}
+                  onValueChange={(value: string) =>
+                    setNewProject({ ...newProject, funding: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="資金源を選択" />
                   </SelectTrigger>
@@ -518,9 +613,7 @@ export function Projects() {
                 value={newProject.expectedMembers}
                 onChange={(e) => setNewProject({ ...newProject, expectedMembers: e.target.value })}
               />
-              <p className="text-xs text-gray-500 mt-1">
-                2〜100名の範囲で設定してください
-              </p>
+              <p className="text-xs text-gray-500 mt-1">2〜100名の範囲で設定してください</p>
             </div>
 
             {/* Tags */}
@@ -547,9 +640,7 @@ export function Projects() {
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <Link className="w-4 h-4 text-blue-600" />
-                <span className="text-blue-900">
-                  プロジェクトドキュメントはIPFSに保存されます
-                </span>
+                <span className="text-blue-900">プロジェクトドキュメントはIPFSに保存されます</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <CheckCircle2 className="w-4 h-4 text-blue-600" />
