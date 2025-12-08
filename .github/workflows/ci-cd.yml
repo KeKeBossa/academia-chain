@@ -69,12 +69,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: academic-chain/package-lock.json
-          
+      
+      - name: Check academic-chain package.json
+        working-directory: academic-chain
+        run: ls -la && cat package.json
+        
       - name: Install dependencies
         working-directory: academic-chain
         run: npm ci
+        
+      - name: Verify react-i18next installation
+        working-directory: academic-chain
+        run: npm list react-i18next || echo "react-i18next not found"
         
       - name: Build Vite app
         working-directory: academic-chain
