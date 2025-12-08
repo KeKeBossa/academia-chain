@@ -1,0 +1,37 @@
+{
+  "folders": [
+    {
+      "path": ".",
+      "name": "🔗 Root (Blockchain + Backend)"
+    },
+    {
+      "path": "academic-chain",
+      "name": "🎨 DAO Platform UI"
+    },
+    {
+      "path": "academic-repository",
+      "name": "📚 Repository Docs"
+    }
+  ],
+  "settings": {
+    "[typescript]": {
+      "editor.formatOnSave": true
+    },
+    "[typescriptreact]": {
+      "editor.formatOnSave": true
+    },
+    "search.exclude": {
+      "node_modules": true,
+      "dist": true,
+      ".next": true,
+      "artifacts": true,
+      "cache": true,
+      "typechain-types": true
+    },
+    "files.exclude": {
+      "**/.DS_Store": true,
+      "**/node_modules": true,
+      "**/.next": true
+    }
+  }
+}

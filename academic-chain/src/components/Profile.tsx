@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useState, useEffect } from 'react';
 import { Edit, Mail, MapPin, GraduationCap, Award, FileText, Users, Briefcase, ExternalLink, Shield, Hash, X, Plus } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -11,38 +12,81 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Combobox } from './ui/combobox';
 import { toast } from 'sonner';
-import { usePapers } from '../hooks/useData';
+import { usePapers, useProjects, useSeminars, calculateReputation, calculateVotingPower } from '../hooks/useData';
+import { useUserProfile, type UserProfile } from '../hooks/useUserProfile';
+import { UNIVERSITY_NAMES, getDepartmentsByUniversity } from '../data/universities';
+import { ACADEMIC_LEVELS } from '../data/academic-levels';
 
 export function Profile() {
+  const { t } = useTranslation();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [userProfile, setUserProfile] = useState({
-    name: '田中 太郎',
-    did: 'did:ethr:0x1234567890abcdef',
-    email: 'tanaka@example.ac.jp',
-    university: '東京大学',
-    department: '情報理工学系研究科',
-    position: '博士課程3年',
-    researchFields: ['量子コンピューティング', '機械学習', 'ブロックチェーン'],
-    bio: '量子コンピューティングと機械学習の融合に興味を持っています。特に量子機械学習アルゴリズムの開発と応用に取り組んでいます。',
-    reputation: 1247,
-    papers: 12,
-    seminars: 3,
-    projects: 5,
-    daoTokens: 850,
-    joinDate: '2024-04-01',
+  
+  // useUserProfile フックから状態を取得
+  const { profile, isLoading: profileLoading, saveProfile, updateStats } = useUserProfile();
+  
+  // 実データから取得
+  const { papers: fetchedPapers, loading: loadingPapers } = usePapers();
+  const { projects: fetchedProjects, loading: loadingProjects } = useProjects();
+  const { seminars: fetchedSeminars, loading: loadingSeminars } = useSeminars();
+  
+  const [editForm, setEditForm] = useState<UserProfile>({
+    name: '',
+    did: '',
+    email: '',
+    university: '',
+    department: '',
+    academicLevel: '',
+    position: '',
+    researchFields: [],
+    bio: '',
+    reputation: 0,
+    papers: 0,
+    seminars: 0,
+    projects: 0,
+    daoTokens: 0,
+    joinDate: new Date().toISOString().split('T')[0],
   });
-
-  const [editForm, setEditForm] = useState(userProfile);
   const [newResearchField, setNewResearchField] = useState('');
 
-  // 実データから論文を取得
-  const { papers: fetchedPapers, loading: loadingPapers } = usePapers();
+  // editForm を profile と同期
+  useEffect(() => {
+    if (profile) {
+      setEditForm(profile);
+    }
+  }, [profile]);
+
+  // useEffect で実データを反映し、プロフィールを更新
+  useEffect(() => {
+    if (profile && !profileLoading) {
+      const calculatedReputation = calculateReputation();
+      const calculatedVotingPower = calculateVotingPower();
+      updateStats({
+        papers: fetchedPapers.length,
+        seminars: fetchedSeminars.length,
+        projects: fetchedProjects.length,
+        reputation: calculatedReputation,
+        daoTokens: Math.round(calculatedVotingPower),
+      });
+    }
+  }, [fetchedPapers.length, fetchedSeminars.length, fetchedProjects.length, profile, profileLoading, updateStats]);
+
+  if (profileLoading || !profile) {
+    return (
+      <div className="max-w-7xl mx-auto space-y-6 py-8">
+        <Skeleton className="h-48 w-full rounded-lg" />
+        <Skeleton className="h-32 w-full rounded-lg" />
+      </div>
+    );
+  }
+
   const recentPapers = fetchedPapers.slice(0, 3).map(p => ({
     title: p.title,
     date: p.date,
-    citations: p.citations,
-    downloads: p.downloads,
+    citations: p.citations || 0,
+    downloads: p.downloads || 0,
   }));
 
   const achievements = [
@@ -68,31 +112,36 @@ export function Profile() {
           <div className="flex flex-col md:flex-row gap-6">
             <Avatar className="w-24 h-24">
               <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-3xl">
-                田中
+                {profile.name.charAt(0)}
               </AvatarFallback>
             </Avatar>
 
             <div className="flex-1">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h1 className="text-gray-900 mb-2">{userProfile.name}</h1>
+                  <h1 className="text-gray-900 mb-2">{profile.name}</h1>
                   <div className="space-y-1 text-sm text-gray-600">
                     <div className="flex items-center gap-2">
+                      <Hash className="w-4 h-4" />
+                      <span className="text-xs font-semibold text-gray-500">ID:</span>
+                      <span className="font-mono text-xs">{profile.did}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
                       <GraduationCap className="w-4 h-4" />
-                      <span>{userProfile.university} - {userProfile.department}</span>
+                      <span>{profile.university} - {profile.department}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4" />
-                      <span>{userProfile.position}</span>
+                      <span>{profile.position}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Mail className="w-4 h-4" />
-                      <span>{userProfile.email}</span>
+                      <span>{profile.email}</span>
                     </div>
                   </div>
                 </div>
                 <Button onClick={() => {
-                  setEditForm(userProfile);
+                  setEditForm(profile);
                   setIsEditDialogOpen(true);
                 }}>
                   <Edit className="w-4 h-4 mr-2" />
@@ -100,10 +149,10 @@ export function Profile() {
                 </Button>
               </div>
 
-              <p className="text-gray-700 mb-4">{userProfile.bio}</p>
+              <p className="text-gray-700 mb-4">{profile.bio}</p>
 
               <div className="flex flex-wrap gap-2 mb-4">
-                {userProfile.researchFields.map((field, index) => (
+                {profile.researchFields.map((field: string, index: number) => (
                   <Badge key={index} variant="secondary">
                     {field}
                   </Badge>
@@ -112,9 +161,9 @@ export function Profile() {
 
               <div className="bg-gray-50 rounded-lg p-3 mb-4">
                 <div className="flex items-center gap-2 text-sm">
-                  <Shield className="w-4 h-4 text-blue-600" />
-                  <span className="text-gray-600">分散ID:</span>
-                  <span className="text-gray-900 font-mono">{userProfile.did}</span>
+                  <Hash className="w-4 h-4 text-blue-600" />
+                  <span className="text-gray-600 font-semibold">ID:</span>
+                  <span className="text-gray-900 font-mono">{profile.did}</span>
                   <Button variant="ghost" size="sm" className="ml-auto">
                     <ExternalLink className="w-3 h-3" />
                   </Button>
@@ -130,7 +179,7 @@ export function Profile() {
         <Card>
           <CardContent className="p-4 text-center">
             <Award className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-            <div className="text-2xl mb-1">{userProfile.reputation}</div>
+            <div className="text-2xl mb-1">{profile.reputation}</div>
             <p className="text-gray-600 text-sm">レピュテーション</p>
           </CardContent>
         </Card>
@@ -138,7 +187,7 @@ export function Profile() {
         <Card>
           <CardContent className="p-4 text-center">
             <FileText className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-            <div className="text-2xl mb-1">{userProfile.papers}</div>
+            <div className="text-2xl mb-1">{profile.papers}</div>
             <p className="text-gray-600 text-sm">公開論文</p>
           </CardContent>
         </Card>
@@ -146,7 +195,7 @@ export function Profile() {
         <Card>
           <CardContent className="p-4 text-center">
             <Users className="w-8 h-8 text-purple-500 mx-auto mb-2" />
-            <div className="text-2xl mb-1">{userProfile.seminars}</div>
+            <div className="text-2xl mb-1">{profile.seminars}</div>
             <p className="text-gray-600 text-sm">参加ゼミ</p>
           </CardContent>
         </Card>
@@ -154,7 +203,7 @@ export function Profile() {
         <Card>
           <CardContent className="p-4 text-center">
             <Briefcase className="w-8 h-8 text-green-500 mx-auto mb-2" />
-            <div className="text-2xl mb-1">{userProfile.projects}</div>
+            <div className="text-2xl mb-1">{profile.projects}</div>
             <p className="text-gray-600 text-sm">共同研究</p>
           </CardContent>
         </Card>
@@ -162,7 +211,7 @@ export function Profile() {
         <Card>
           <CardContent className="p-4 text-center">
             <Hash className="w-8 h-8 text-indigo-500 mx-auto mb-2" />
-            <div className="text-2xl mb-1">{userProfile.daoTokens}</div>
+            <div className="text-2xl mb-1">{profile.daoTokens}</div>
             <p className="text-gray-600 text-sm">DAOトークン</p>
           </CardContent>
         </Card>
@@ -342,33 +391,74 @@ export function Profile() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="university">大学 *</Label>
-                  <Input
-                    id="university"
-                    value={editForm.university}
-                    onChange={(e) => setEditForm({ ...editForm, university: e.target.value })}
-                    placeholder="東京大学"
-                  />
+                  <Select value={editForm.university} onValueChange={(value: string) => {
+                    setEditForm({ ...editForm, university: value, department: '' });
+                  }}>
+                    <SelectTrigger id="university">
+                      <SelectValue placeholder="大学を選択..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {UNIVERSITY_NAMES.map((name) => (
+                        <SelectItem key={name} value={name}>
+                          {name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
                   <Label htmlFor="department">学部・研究科 *</Label>
-                  <Input
-                    id="department"
+                  <Combobox
+                    options={editForm.university 
+                      ? getDepartmentsByUniversity(editForm.university).map(dept => ({
+                          label: dept.name,
+                          value: dept.name
+                        }))
+                      : []
+                    }
                     value={editForm.department}
-                    onChange={(e) => setEditForm({ ...editForm, department: e.target.value })}
-                    placeholder="情報理工学系研究科"
+                    onValueChange={(value: string) => {
+                      setEditForm({ ...editForm, department: value });
+                    }}
+                    onCustomValue={(customValue: string) => {
+                      setEditForm({ ...editForm, department: customValue });
+                    }}
+                    placeholder={editForm.university ? '学部を選択または入力...' : '大学を先に選択してください'}
+                    searchPlaceholder="学部・研究科を検索..."
+                    allowCustom={true}
                   />
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="position">所属 *</Label>
-                <Input
-                  id="position"
-                  value={editForm.position}
-                  onChange={(e) => setEditForm({ ...editForm, position: e.target.value })}
-                  placeholder="博士課程3年"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="academicLevel">学年 *</Label>
+                  <Select value={editForm.academicLevel} onValueChange={(value: string) => {
+                    setEditForm({ ...editForm, academicLevel: value });
+                  }}>
+                    <SelectTrigger id="academicLevel">
+                      <SelectValue placeholder="学年を選択..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ACADEMIC_LEVELS.map((level) => (
+                        <SelectItem key={level.id} value={level.value}>
+                          {level.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="position">所属 *</Label>
+                  <Input
+                    id="position"
+                    value={editForm.position}
+                    onChange={(e) => setEditForm({ ...editForm, position: e.target.value })}
+                    placeholder="研究員"
+                  />
+                </div>
               </div>
             </div>
 
@@ -450,17 +540,17 @@ export function Profile() {
               </p>
             </div>
 
-            {/* DID (Read-only) */}
+            {/* ID (Read-only) */}
             <div>
-              <Label>分散ID（変更不可）</Label>
+              <Label>ID（変更不可）</Label>
               <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
                 <div className="flex items-center gap-2 text-sm">
-                  <Shield className="w-4 h-4 text-blue-600" />
+                  <Hash className="w-4 h-4 text-blue-600" />
                   <span className="text-gray-900 font-mono">{editForm.did}</span>
                 </div>
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                分散IDはブロックチェーン上で管理されており変更できません
+                IDはブロックチェーン上で管理されており変更できません
               </p>
             </div>
           </div>
@@ -491,7 +581,7 @@ export function Profile() {
                 }
 
                 // Save profile
-                setUserProfile(editForm);
+                saveProfile(editForm, false);
                 setIsEditDialogOpen(false);
                 setNewResearchField('');
                 toast.success('プロフィールを更新しました');

@@ -4,7 +4,7 @@
  */
 
 export const API_CONFIG = {
-  BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:3000',
+  BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
   TIMEOUT: 10000,
 } as const;
 

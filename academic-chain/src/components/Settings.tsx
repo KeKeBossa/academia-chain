@@ -94,7 +94,7 @@ export function Settings() {
                     <Wallet className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <div className="text-sm text-blue-900 mb-1">分散ID (DID)</div>
+                    <div className="text-sm text-blue-900 mb-1">ID</div>
                     <div className="text-xs text-blue-700 font-mono">{connectedWallet}</div>
                   </div>
                 </div>

@@ -1,44 +1,47 @@
-import { useState } from 'react';
-import { Search, Filter, Upload, Download, ExternalLink, FileText, Calendar, User, Hash, Award, Heart, MessageSquare, Users, Shield, Lock, Globe, CheckCircle2 } from 'lucide-react';
+import { useState, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Search, Upload, Hash, FileText, Shield, Globe, Lock, Users, Heart } from 'lucide-react';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { Badge } from './ui/badge';
-import { Avatar, AvatarFallback } from './ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { toast } from 'sonner';
-import { usePapers } from '../hooks/useData';
+import { usePapers, savePaperToStorage } from '../hooks/useData';
 import { Skeleton } from './ui/skeleton';
+import { PaperList } from './PaperList';
 
-interface Paper {
-  id: string;
-  title: string;
-  author: string;
-  university: string;
-  department: string;
-  date: string;
-  abstract: string;
-  tags: string[];
-  category: string;
-  txHash: string;
-  ipfsHash: string;
-  citations: number;
-  downloads: number;
-  likes: number;
-  comments: number;
-  verified: boolean;
-  accessType?: 'open' | 'restricted';
+const CATEGORIES = [
+  'コンピュータサイエンス',
+  'エネルギー工学',
+  '量子情報科学',
+  '都市工学',
+  'バイオテクノロジー',
+  '材料科学',
+  '医療・ヘルスケア',
+  '環境科学',
+  '数学',
+  '物理学',
+  '化学',
+  'その他',
+];
+
+interface RepositoryProps {
+  onNavigateToPaper?: (paperId: string) => void;
 }
 
-export function Repository() {
+export function Repository({ onNavigateToPaper }: RepositoryProps) {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [sortBy, setSortBy] = useState('latest');
   const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const { papers: fetchedPapers, loading: loadingPapers } = usePapers(searchQuery);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  
   const [newPaper, setNewPaper] = useState({
     title: '',
     authors: '',
@@ -48,69 +51,33 @@ export function Repository() {
     category: '',
     tags: '',
     doi: '',
-    accessType: 'open',
+    accessType: 'open' as 'open' | 'restricted',
     fileName: '',
   });
 
-  // フェッチされた論文を使用
-  const [papers, setPapers] = useState<Paper[]>(() => {
-    if (!fetchedPapers || fetchedPapers.length === 0) {
-      return [];
+  const filters = useMemo(() => ({
+    category: selectedCategory === 'all' ? undefined : selectedCategory,
+  }), [selectedCategory]);
+
+  // refreshTrigger が変わるたびにデータを再読み込み
+  const { papers: fetchedPapers, loading: loadingPapers } = usePapers(searchQuery, filters, refreshTrigger);
+
+  const sortedPapers = useMemo(() => {
+    if (!fetchedPapers) return [];
+    const sorted = [...fetchedPapers];
+    switch (sortBy) {
+      case 'popular':
+        return sorted.sort((a, b) => b.likes - a.likes);
+      case 'citations':
+        return sorted.sort((a, b) => b.citations - a.citations);
+      case 'downloads':
+        return sorted.sort((a, b) => b.downloads - a.downloads);
+      default:
+        return sorted.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     }
-    return fetchedPapers.map(p => ({
-      ...p,
-      department: p.department || '',
-      txHash: '',
-      ipfsHash: '',
-      citations: 0,
-      accessType: (p.accessType || 'open') as 'open' | 'restricted',
-    }));
-  });
+  }, [fetchedPapers, sortBy]);
 
-  const categories = [
-    'コンピュータサイエンス',
-    'エネルギー工学',
-    '量子情報科学',
-    '都市工学',
-    'バイオテクノロジー',
-    '材料科学',
-    '医療・ヘルスケア',
-    '環境科学',
-    '数学',
-    '物理学',
-    '化学',
-    'その他',
-  ];
-
-  const generateBlockchainHash = () => {
-    return '0x' + Array.from({ length: 64 }, () => 
-      Math.floor(Math.random() * 16).toString(16)
-    ).join('');
-  };
-
-  const generateIPFSHash = () => {
-    return 'Qm' + Array.from({ length: 44 }, () => 
-      'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'.charAt(
-        Math.floor(Math.random() * 62)
-      )
-    ).join('');
-  };
-
-  const simulateFileUpload = () => {
-    return new Promise((resolve) => {
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += 10;
-        setUploadProgress(progress);
-        if (progress >= 100) {
-          clearInterval(interval);
-          resolve(true);
-        }
-      }, 200);
-    });
-  };
-
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (!file.name.toLowerCase().endsWith('.pdf')) {
@@ -121,92 +88,100 @@ export function Repository() {
         toast.error('ファイルサイズは50MB以下にしてください');
         return;
       }
+      setPdfFile(file);
       setNewPaper({ ...newPaper, fileName: file.name });
       toast.success(`${file.name} を選択しました`);
     }
-  };
+  }, [newPaper]);
 
-  const handlePublishPaper = async () => {
-    // Validation
-    if (!newPaper.title.trim()) {
-      toast.error('論文タイトルを入力してください');
-      return;
-    }
-    if (newPaper.title.length < 10) {
+  const validateForm = useCallback((): boolean => {
+    if (!newPaper.title.trim() || newPaper.title.length < 10) {
       toast.error('論文タイトルは10文字以上で入力してください');
-      return;
+      return false;
     }
     if (!newPaper.authors.trim()) {
       toast.error('著者名を入力してください');
-      return;
+      return false;
     }
-    if (!newPaper.university.trim()) {
-      toast.error('所属機関を入力してください');
-      return;
+    if (!newPaper.university.trim() || !newPaper.department.trim()) {
+      toast.error('所属機関・部署を入力してください');
+      return false;
     }
-    if (!newPaper.department.trim()) {
-      toast.error('所属部署を入力してください');
-      return;
-    }
-    if (!newPaper.abstract.trim()) {
-      toast.error('アブストラクトを入力してください');
-      return;
-    }
-    if (newPaper.abstract.length < 100) {
+    if (!newPaper.abstract.trim() || newPaper.abstract.length < 100) {
       toast.error('アブストラクトは100文字以上で入力してください');
-      return;
+      return false;
     }
-    if (!newPaper.category) {
-      toast.error('研究分野を選択してください');
-      return;
+    if (!newPaper.category || !newPaper.tags.trim() || !newPaper.fileName) {
+      toast.error('必須項目を入力してください');
+      return false;
     }
-    if (!newPaper.tags.trim()) {
-      toast.error('キーワードを入力してください（カンマ区切りで1つ以上）');
-      return;
-    }
-    if (!newPaper.fileName) {
-      toast.error('論文ファイル（PDF）をアップロードしてください');
-      return;
-    }
+    return true;
+  }, [newPaper]);
 
-    // Simulate file upload to IPFS
+  const handlePublishPaper = useCallback(async () => {
+    if (!validateForm()) return;
+
     toast.info('IPFSへアップロード中...');
-    await simulateFileUpload();
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
-    // Generate blockchain identifiers
-    const txHash = generateBlockchainHash();
-    const ipfsHash = generateIPFSHash();
+    // Generate mock IPFS hash and transaction hash
+    const ipfsHash = 'QmVYBU-' + Array.from({ length: 40 }, () => 
+      Math.random().toString(36)[2]
+    ).join('').substring(0, 40);
+    
+    const txHash = '0x' + Array.from({ length: 64 }, () => 
+      Math.floor(Math.random() * 16).toString(16)
+    ).join('');
 
-    // Parse authors and tags
-    const authorsList = newPaper.authors.split(',').map(a => a.trim());
-    const tagsList = newPaper.tags.split(',').map(t => t.trim()).filter(t => t.length > 0);
+    // PDF ファイルを Base64 にエンコード
+    let pdfUrl: string | undefined;
+    if (pdfFile) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        pdfUrl = event.target?.result as string;
+        
+        // Add paper to storage using the utility function
+        const paper = savePaperToStorage({
+          title: newPaper.title,
+          author: newPaper.authors,
+          university: newPaper.university,
+          department: newPaper.department,
+          abstract: newPaper.abstract,
+          category: newPaper.category,
+          tags: newPaper.tags.split(',').map(t => t.trim()).filter(t => t),
+          date: new Date().toISOString(),
+          ipfsHash,
+          txHash,
+          accessType: newPaper.accessType as 'open' | 'restricted',
+          pdfUrl,
+        });
+        
+        showSuccessToast(txHash, ipfsHash);
+      };
+      reader.readAsDataURL(pdfFile);
+    } else {
+      // Add paper to storage without PDF
+      const paper = savePaperToStorage({
+        title: newPaper.title,
+        author: newPaper.authors,
+        university: newPaper.university,
+        department: newPaper.department,
+        abstract: newPaper.abstract,
+        category: newPaper.category,
+        tags: newPaper.tags.split(',').map(t => t.trim()).filter(t => t),
+        date: new Date().toISOString(),
+        ipfsHash,
+        txHash,
+        accessType: newPaper.accessType as 'open' | 'restricted',
+      });
+      
+      showSuccessToast(txHash, ipfsHash);
+    }
 
-    // Create new paper
-    const paper: Paper = {
-      id: String(papers.length + 1),
-      title: newPaper.title.trim(),
-      author: authorsList[0], // Main author
-      university: newPaper.university.trim(),
-      department: newPaper.department.trim(),
-      date: new Date().toISOString().split('T')[0],
-      abstract: newPaper.abstract.trim(),
-      tags: tagsList,
-      category: newPaper.category,
-      txHash: txHash.slice(0, 10) + '...' + txHash.slice(-4),
-      ipfsHash: ipfsHash.slice(0, 10) + '...',
-      citations: 0,
-      downloads: 0,
-      likes: 0,
-      comments: 0,
-      verified: true,
-      accessType: newPaper.accessType as 'open' | 'restricted',
-    };
+    // Trigger data refresh in usePapers hook
+    setRefreshTrigger(prev => prev + 1);
 
-    setPapers([paper, ...papers]);
     setIsPublishDialogOpen(false);
-    setUploadProgress(0);
-
-    // Reset form
     setNewPaper({
       title: '',
       authors: '',
@@ -219,19 +194,21 @@ export function Repository() {
       accessType: 'open',
       fileName: '',
     });
+    setPdfFile(null);
+  }, [validateForm, newPaper, pdfFile]);
 
-    // Show success message with blockchain info
+  const showSuccessToast = (txHash: string, ipfsHash: string) => {
     toast.success(
       <div className="space-y-2">
         <div>論文を公開しました</div>
         <div className="text-xs space-y-1 pt-2 border-t border-gray-200">
           <div className="flex items-center gap-1">
             <Hash className="w-3 h-3" />
-            <span className="opacity-80">TX: {txHash.slice(0, 24)}...</span>
+            <span>TX: {txHash.slice(0, 24)}...</span>
           </div>
           <div className="flex items-center gap-1">
             <FileText className="w-3 h-3" />
-            <span className="opacity-80">IPFS: {ipfsHash.slice(0, 24)}...</span>
+            <span>IPFS: {ipfsHash.slice(0, 20)}...</span>
           </div>
         </div>
       </div>,
@@ -239,16 +216,27 @@ export function Repository() {
     );
   };
 
+  const handleLike = useCallback((paperId: string) => {
+    toast.success('いいねしました');
+    // UI を再レンダリングして最新のいいね数を表示
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
+
+  const handleDownload = useCallback((paperId: string) => {
+    toast.success('ダウンロード開始');
+    // UI を再レンダリングしてダウンロード数を更新
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-gray-900 mb-2">研究レポジトリ</h1>
           <p className="text-gray-600">ブロックチェーンで永続的に記録された学術論文</p>
         </div>
         <Button 
-          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+          className="bg-gradient-to-r from-blue-600 to-indigo-600"
           onClick={() => setIsPublishDialogOpen(true)}
         >
           <Upload className="w-4 h-4 mr-2" />
@@ -256,455 +244,230 @@ export function Repository() {
         </Button>
       </div>
 
-      {/* Search and Filters */}
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <Input
-                placeholder="論文タイトル、著者、キーワードで検索..."
+                placeholder="検索..."
                 className="pl-10"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <Select defaultValue="all">
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
               <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="カテゴリ" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">すべて</SelectItem>
-                <SelectItem value="cs">コンピュータサイエンス</SelectItem>
-                <SelectItem value="energy">エネルギー工学</SelectItem>
-                <SelectItem value="quantum">量子情報科学</SelectItem>
-                <SelectItem value="urban">都市工学</SelectItem>
+                {CATEGORIES.map((cat) => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            <Select defaultValue="latest">
+            <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="並び替え" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="latest">最新順</SelectItem>
                 <SelectItem value="popular">人気順</SelectItem>
                 <SelectItem value="citations">引用数順</SelectItem>
-                <SelectItem value="downloads">ダウンロード数順</SelectItem>
+                <SelectItem value="downloads">ダウンロード順</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Papers List */}
       <Tabs defaultValue="all" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="all">すべて ({papers.length})</TabsTrigger>
+          <TabsTrigger value="all">すべて ({sortedPapers.length})</TabsTrigger>
           <TabsTrigger value="following">フォロー中</TabsTrigger>
           <TabsTrigger value="mypapers">自分の論文</TabsTrigger>
           <TabsTrigger value="saved">保存済み</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="all" className="space-y-4">
-          {papers.map((paper) => (
-            <Card key={paper.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex gap-4">
-                  <Avatar className="mt-1">
-                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
-                      {paper.author.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-4 mb-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-gray-900">{paper.title}</h3>
-                          {paper.verified && (
-                            <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
-                              検証済
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                          <User className="w-4 h-4" />
-                          <span>{paper.author}</span>
-                          <span>•</span>
-                          <span>{paper.university}</span>
-                          <span>•</span>
-                          <span>{paper.department}</span>
-                        </div>
-                      </div>
-                      <Badge variant="outline">{paper.category}</Badge>
-                    </div>
-
-                    <p className="text-gray-700 mb-4 leading-relaxed">
-                      {paper.abstract}
-                    </p>
-
-                    <div className="flex flex-wrap items-center gap-2 mb-4">
-                      {paper.tags.map((tag, tagIndex) => (
-                        <Badge key={tagIndex} variant="secondary" className="text-xs">
-                          #{tag}
-                        </Badge>
-                      ))}
-                    </div>
-
-                    <div className="flex items-center gap-6 text-sm text-gray-600 mb-4">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        <span>{paper.date}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Award className="w-4 h-4" />
-                        <span>{paper.citations} 引用</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Download className="w-4 h-4" />
-                        <span>{paper.downloads} DL</span>
-                      </div>
-                    </div>
-
-                    <div className="bg-gray-50 rounded-lg p-3 mb-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-                        <div className="flex items-center gap-2">
-                          <Hash className="w-3 h-3 text-gray-500" />
-                          <span className="text-gray-600">TX:</span>
-                          <span className="text-gray-900 font-mono">{paper.txHash}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-3 h-3 text-gray-500" />
-                          <span className="text-gray-600">IPFS:</span>
-                          <span className="text-gray-900 font-mono">{paper.ipfsHash}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-red-600 transition-colors">
-                          <Heart className="w-4 h-4" />
-                          <span>{paper.likes}</span>
-                        </button>
-                        <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600 transition-colors">
-                          <MessageSquare className="w-4 h-4" />
-                          <span>{paper.comments}</span>
-                        </button>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm">
-                          <Download className="w-4 h-4 mr-2" />
-                          ダウンロード
-                        </Button>
-                        <Button size="sm">
-                          詳細を見る
-                          <ExternalLink className="w-4 h-4 ml-2" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <TabsContent value="all">
+          {loadingPapers ? (
+            <>{[1, 2, 3].map((i) => <Skeleton key={i} className="h-48" />)}</>
+          ) : sortedPapers.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">論文が見つかりません</div>
+          ) : (
+            <PaperList papers={sortedPapers} onLike={handleLike} onDownload={handleDownload} onNavigateToPaper={onNavigateToPaper} />
+          )}
         </TabsContent>
 
         <TabsContent value="following">
           <Card>
-            <CardContent className="p-12 text-center">
+            <CardContent className="p-12 text-center text-gray-600">
               <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">フォローしている研究者の論文がここに表示されます</p>
+              フォロー中の論文がありません
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="mypapers">
           <Card>
-            <CardContent className="p-12 text-center">
+            <CardContent className="p-12 text-center text-gray-600">
               <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 mb-4">まだ論文を公開していません</p>
-              <Button className="bg-gradient-to-r from-blue-600 to-indigo-600">
-                <Upload className="w-4 h-4 mr-2" />
-                最初の論文を公開
-              </Button>
+              公開した論文がありません
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="saved">
           <Card>
-            <CardContent className="p-12 text-center">
+            <CardContent className="p-12 text-center text-gray-600">
               <Heart className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">保存した論文がここに表示されます</p>
+              保存した論文がありません
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
 
-      {/* Publish Paper Dialog */}
       <Dialog open={isPublishDialogOpen} onOpenChange={setIsPublishDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>論文を公開</DialogTitle>
             <DialogDescription>
-              ブロックチェーン上に永続的に記録される学術論文を公開します。
-              論文はIPFSに保存され、改ざん不可能な形で記録されます。
+              ブロックチェーン上に永続的に記録される学術論文を公開します
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6 py-4">
-            {/* Blockchain Notice */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+          <div className="space-y-4 py-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Shield className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-sm text-blue-900 mb-2">ブロックチェーン記録の特徴</div>
+                <Shield className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-blue-900">
+                  <div className="mb-2 font-medium">ブロックチェーン記録</div>
                   <div className="text-xs text-blue-700 space-y-1">
-                    <div>✓ 論文ファイルはIPFSに分散保存されます</div>
-                    <div>✓ メタデータはブロックチェーンに永続記録されます</div>
-                    <div>✓ タイムスタンプにより研究の優先権を証明できます</div>
-                    <div>✓ 透明性の高い引用・評価システムで管理されます</div>
+                    <div>✓ IPFSに分散保存</div>
+                    <div>✓ ブロックチェーンに永続記録</div>
+                    <div>✓ 改ざん不可能</div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Paper Title */}
             <div>
-              <Label htmlFor="paper-title">論文タイトル *</Label>
+              <Label>論文タイトル *</Label>
               <Input
-                id="paper-title"
                 value={newPaper.title}
                 onChange={(e) => setNewPaper({ ...newPaper, title: e.target.value })}
-                placeholder="例: 深層学習を用いた医療画像診断の高精度化"
                 maxLength={200}
               />
-              <p className="text-xs text-gray-500 mt-1">
-                {newPaper.title.length} / 200文字（最低10文字）
-              </p>
             </div>
 
-            {/* Authors */}
             <div>
-              <Label htmlFor="authors">著者 *</Label>
+              <Label>著者（カンマ区切り） *</Label>
               <Input
-                id="authors"
                 value={newPaper.authors}
                 onChange={(e) => setNewPaper({ ...newPaper, authors: e.target.value })}
-                placeholder="山田 花子, 佐藤 太郎（カンマ区切り、筆頭著者を最初に）"
               />
-              <p className="text-xs text-gray-500 mt-1">
-                複数の著者がいる場合はカンマで区切ってください
-              </p>
             </div>
 
-            {/* Institution */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="university">所属機関 *</Label>
+                <Label>所属機関 *</Label>
                 <Input
-                  id="university"
                   value={newPaper.university}
                   onChange={(e) => setNewPaper({ ...newPaper, university: e.target.value })}
-                  placeholder="東京大学"
                 />
               </div>
               <div>
-                <Label htmlFor="department">所属部署 *</Label>
+                <Label>所属部署 *</Label>
                 <Input
-                  id="department"
                   value={newPaper.department}
                   onChange={(e) => setNewPaper({ ...newPaper, department: e.target.value })}
-                  placeholder="情報理工学系研究科"
                 />
               </div>
             </div>
 
-            {/* Abstract */}
             <div>
-              <Label htmlFor="abstract">アブストラクト *</Label>
+              <Label>アブストラクト（100文字以上） *</Label>
               <Textarea
-                id="abstract"
                 value={newPaper.abstract}
                 onChange={(e) => setNewPaper({ ...newPaper, abstract: e.target.value })}
-                placeholder="研究の背景、目的、方法、結果、結論を簡潔に記述してください。"
-                rows={8}
+                rows={5}
                 maxLength={2000}
               />
-              <p className="text-xs text-gray-500 mt-1">
-                {newPaper.abstract.length} / 2000文字（最低100文字）
-              </p>
             </div>
 
-            {/* Category & Access Type */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="category">研究分野 *</Label>
+                <Label>研究分野 *</Label>
                 <Select value={newPaper.category} onValueChange={(value: string) => setNewPaper({ ...newPaper, category: value })}>
                   <SelectTrigger>
-                    <SelectValue placeholder="研究分野を選択" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat}
-                      </SelectItem>
+                    {CATEGORIES.map((cat) => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-
               <div>
-                <Label htmlFor="access-type">公開設定 *</Label>
+                <Label>公開設定 *</Label>
                 <Select value={newPaper.accessType} onValueChange={(value: string) => setNewPaper({ ...newPaper, accessType: value as 'open' | 'restricted' })}>
                   <SelectTrigger>
-                    <SelectValue placeholder="公開設定を選択" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="open">
-                      <div className="flex items-center gap-2">
-                        <Globe className="w-4 h-4 text-green-600" />
-                        <span>オープンアクセス（推奨）</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="restricted">
-                      <div className="flex items-center gap-2">
-                        <Lock className="w-4 h-4 text-orange-600" />
-                        <span>制限付きアクセス</span>
-                      </div>
-                    </SelectItem>
+                    <SelectItem value="open">オープン</SelectItem>
+                    <SelectItem value="restricted">制限付き</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
-            {/* Tags */}
             <div>
-              <Label htmlFor="tags">キーワード *</Label>
+              <Label>キーワード（カンマ区切り） *</Label>
               <Input
-                id="tags"
                 value={newPaper.tags}
                 onChange={(e) => setNewPaper({ ...newPaper, tags: e.target.value })}
-                placeholder="深層学習, 医療AI, CNN, 画像診断（カンマ区切り）"
               />
-              <p className="text-xs text-gray-500 mt-1">
-                論文の内容を表すキーワードをカンマ区切りで入力してください（3〜7個推奨）
-              </p>
             </div>
 
-            {/* DOI (Optional) */}
             <div>
-              <Label htmlFor="doi">DOI（オプション）</Label>
+              <Label>DOI（オプション）</Label>
               <Input
-                id="doi"
                 value={newPaper.doi}
                 onChange={(e) => setNewPaper({ ...newPaper, doi: e.target.value })}
-                placeholder="10.1000/xyz123"
               />
-              <p className="text-xs text-gray-500 mt-1">
-                既存のDOIがある場合は入力してください
-              </p>
             </div>
 
-            {/* File Upload */}
             <div>
-              <Label htmlFor="paper-file">論文ファイル（PDF） *</Label>
-              <div className="mt-2">
-                <div className="flex items-center gap-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => document.getElementById('paper-file')?.click()}
-                    className="w-full justify-start"
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    {newPaper.fileName || 'PDFファイルを選択'}
-                  </Button>
-                  <input
-                    id="paper-file"
-                    type="file"
-                    accept=".pdf"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
-                </div>
-                {uploadProgress > 0 && uploadProgress < 100 && (
-                  <div className="mt-3">
-                    <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                      <span>IPFSへアップロード中...</span>
-                      <span>{uploadProgress}%</span>
-                    </div>
-                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-blue-600 transition-all duration-300"
-                        style={{ width: `${uploadProgress}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
-                <p className="text-xs text-gray-500 mt-2">
-                  PDFファイルのみ対応（最大50MB）
-                </p>
-              </div>
-            </div>
-
-            {/* Info Boxes */}
-            <div className="space-y-3">
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                <div className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                  <div className="text-xs text-green-800">
-                    <div className="mb-1">オープンアクセス論文の特典</div>
-                    <div className="space-y-0.5 text-green-700">
-                      <div>• DAOトークン報酬が付与されます</div>
-                      <div>• より多くの研究者にリーチできます</div>
-                      <div>• 引用数・インパクトの向上が期待できます</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                <p className="text-xs text-yellow-800">
-                  ⚠️ ブロックチェーンに記録された論文は削除できません。公開前に内容を十分に確認してください。
-                </p>
-              </div>
+              <Label>論文ファイル（PDF） *</Label>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => document.getElementById('paper-file')?.click()}
+                className="w-full justify-start"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                {newPaper.fileName || 'ファイルを選択'}
+              </Button>
+              <input
+                id="paper-file"
+                type="file"
+                accept=".pdf"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
             </div>
           </div>
 
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsPublishDialogOpen(false);
-                setUploadProgress(0);
-                setNewPaper({
-                  title: '',
-                  authors: '',
-                  university: '',
-                  department: '',
-                  abstract: '',
-                  category: '',
-                  tags: '',
-                  doi: '',
-                  accessType: 'open',
-                  fileName: '',
-                });
-              }}
-            >
+            <Button variant="outline" onClick={() => setIsPublishDialogOpen(false)}>
               キャンセル
             </Button>
-            <Button
-              onClick={handlePublishPaper}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-              disabled={uploadProgress > 0 && uploadProgress < 100}
-            >
+            <Button onClick={handlePublishPaper} className="bg-blue-600">
               <Upload className="w-4 h-4 mr-2" />
-              論文を公開
+              公開
             </Button>
           </DialogFooter>
         </DialogContent>

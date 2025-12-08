@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Vote, TrendingUp, CheckCircle2, XCircle, Clock, Plus, ThumbsUp, ThumbsDown, MessageSquare, Calendar, Hash } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -11,7 +12,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 type ProposalStatus = 'active' | 'pending' | 'passed' | 'rejected';
 
@@ -32,8 +33,14 @@ interface Proposal {
   requiredTokens: number;
 }
 
-export function Governance() {
+interface GovernanceProps {
+  votingPower: number;
+}
+
+export function Governance({ votingPower }: GovernanceProps) {
+  const { t } = useTranslation();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isVotingPowerInfoOpen, setIsVotingPowerInfoOpen] = useState(false);
   const [newProposal, setNewProposal] = useState({
     title: '',
     description: '',
@@ -41,72 +48,19 @@ export function Governance() {
     requiredTokens: '100',
     votingPeriod: '7',
   });
-  const [proposals, setProposals] = useState<Proposal[]>([
-    {
-      id: '1',
-      title: '新しい研究分野カテゴリの追加提案',
-      description: '量子機械学習（Quantum Machine Learning）を新しい研究分野カテゴリとして追加することを提案します。この分野は急速に成長しており、多くの研究者が関心を持っています。',
-      proposer: '山田 花子',
-      proposerUniversity: '東京大学',
-      status: 'active' as ProposalStatus,
-      votesFor: 247,
-      votesAgainst: 38,
-      totalVotes: 285,
-      quorum: 300,
-      endDate: '2025-10-25',
-      createdDate: '2025-10-15',
-      category: 'プラットフォーム改善',
-      requiredTokens: 100,
-    },
-    {
-      id: '2',
-      title: '共同研究助成金の配分基準変更',
-      description: '共同研究プロジェクトへの助成金配分において、参加大学数だけでなく、学際性や社会的インパクトも評価基準に含めることを提案します。',
-      proposer: '佐藤 健',
-      proposerUniversity: '京都大学',
-      status: 'active' as ProposalStatus,
-      votesFor: 189,
-      votesAgainst: 145,
-      totalVotes: 334,
-      quorum: 300,
-      endDate: '2025-10-28',
-      createdDate: '2025-10-18',
-      category: '資金配分',
-      requiredTokens: 500,
-    },
-    {
-      id: '3',
-      title: '査読システムの透明性向上',
-      description: 'ブロックチェーン上で査読プロセスの記録を公開し、査読者の匿名性を保ちつつ透明性を高めるシステムの導入を提案します。',
-      proposer: '鈴木 美咲',
-      proposerUniversity: '慶應義塾大学',
-      status: 'pending' as ProposalStatus,
-      votesFor: 0,
-      votesAgainst: 0,
-      totalVotes: 0,
-      quorum: 300,
-      endDate: '2025-11-05',
-      createdDate: '2025-10-22',
-      category: '査読システム',
-      requiredTokens: 200,
-    },
-    {
-      id: '4',
-      title: 'オープンアクセス論文への報奨制度導入',
-      description: 'オープンアクセスで論文を公開した研究者に対して、DAOトークンによる報奨を与える制度を導入することを提案します。',
-      proposer: '高橋 正',
-      proposerUniversity: '大阪大学',
-      status: 'passed' as ProposalStatus,
-      votesFor: 412,
-      votesAgainst: 67,
-      totalVotes: 479,
-      quorum: 300,
-      endDate: '2025-10-20',
-      createdDate: '2025-10-10',
-      category: 'インセンティブ',
-      requiredTokens: 150,
-    },
-  ]);
+  
+  // localStorage から提案を取得
+  const getStoredProposals = (): Proposal[] => {
+    try {
+      const stored = localStorage.getItem('academic-chain:proposals');
+      return stored ? JSON.parse(stored) : [];
+    } catch (error) {
+      console.warn('Failed to parse proposals from localStorage:', error);
+      return [];
+    }
+  };
+
+  const [proposals, setProposals] = useState<Proposal[]>(getStoredProposals());
 
   const statusConfig = {
     active: { label: '投票中', color: 'bg-blue-50 text-blue-700 border-blue-200', icon: Clock },
@@ -114,8 +68,6 @@ export function Governance() {
     passed: { label: '可決', color: 'bg-green-50 text-green-700 border-green-200', icon: CheckCircle2 },
     rejected: { label: '否決', color: 'bg-red-50 text-red-700 border-red-200', icon: XCircle },
   };
-
-  const myVotingPower = 850;
 
   const categories = [
     'プラットフォーム改善',
@@ -148,15 +100,14 @@ export function Governance() {
       toast.error('カテゴリを選択してください');
       return;
     }
-
     const tokensRequired = parseInt(newProposal.requiredTokens);
     if (isNaN(tokensRequired) || tokensRequired < 50 || tokensRequired > 1000) {
       toast.error('必要トークンは50〜1000の範囲で入力してください');
       return;
     }
 
-    if (myVotingPower < tokensRequired) {
-      toast.error(`提案に必要なトークンが不足しています（必要: ${tokensRequired}、保有: ${myVotingPower}）`);
+    if (votingPower < tokensRequired) {
+      toast.error(`提案に必要なトークンが不足しています（必要: ${tokensRequired}、保有: ${votingPower}）`);
       return;
     }
 
@@ -220,22 +171,47 @@ export function Governance() {
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
-                <Vote className="w-6 h-6" />
+      {/* Your Voting Power Section */}
+      <Card className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <h3 className="text-white">あなたの投票権</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-white hover:text-blue-300 hover:bg-transparent transition-colors duration-200 px-2 py-1 border-2 border-gray-200 rounded"
+                  onClick={() => setIsVotingPowerInfoOpen(true)}
+                >
+                  HOW TO GET
+                </Button>
               </div>
-              <div>
-                <div className="text-3xl mb-1">{myVotingPower}</div>
-                <p className="text-gray-600">投票権</p>
+              <p className="text-indigo-100 mb-4">
+                研究活動への貢献に応じて投票権が付与されます
+              </p>
+              <div className="flex items-center gap-6">
+                <div>
+                  <div className="text-white/80 text-sm">総投票権</div>
+                  <div className="text-3xl">{votingPower.toFixed(1)}</div>
+                </div>
+                <div>
+                  <div className="text-white/80 text-sm">今月の獲得</div>
+                  <div className="text-2xl">+50</div>
+                </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+            <div className="flex items-center">
+              <div className="w-24 h-24 bg-white/20 rounded-2xl flex items-center justify-center">
+                <Vote className="w-12 h-12" />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
@@ -243,7 +219,7 @@ export function Governance() {
                 <Clock className="w-6 h-6" />
               </div>
               <div>
-                <div className="text-3xl mb-1">2</div>
+                <div className="text-3xl mb-1">{proposals.filter(p => p.status === 'active').length}</div>
                 <p className="text-gray-600">進行中の投票</p>
               </div>
             </div>
@@ -257,7 +233,7 @@ export function Governance() {
                 <CheckCircle2 className="w-6 h-6" />
               </div>
               <div>
-                <div className="text-3xl mb-1">12</div>
+                <div className="text-3xl mb-1">{proposals.filter(p => p.status === 'passed').length}</div>
                 <p className="text-gray-600">参加した投票</p>
               </div>
             </div>
@@ -271,40 +247,13 @@ export function Governance() {
                 <TrendingUp className="w-6 h-6" />
               </div>
               <div>
-                <div className="text-3xl mb-1">8</div>
+                <div className="text-3xl mb-1">{proposals.length}</div>
                 <p className="text-gray-600">提出した提案</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Your Voting Power */}
-      <Card className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-white mb-2">あなたの投票権</h3>
-              <p className="text-indigo-100 mb-4">
-                研究活動への貢献に応じて投票権が付与されます
-              </p>
-              <div className="flex items-center gap-6">
-                <div>
-                  <div className="text-white/80 text-sm">総投票権</div>
-                  <div className="text-3xl">{myVotingPower}</div>
-                </div>
-                <div>
-                  <div className="text-white/80 text-sm">今月の獲得</div>
-                  <div className="text-2xl">+50</div>
-                </div>
-              </div>
-            </div>
-            <div className="w-24 h-24 bg-white/20 rounded-2xl flex items-center justify-center">
-              <Vote className="w-12 h-12" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Proposals */}
       <Tabs defaultValue="active" className="space-y-4">
@@ -326,7 +275,7 @@ export function Governance() {
               : 0;
 
             return (
-              <Card key={proposal.id} className="hover:shadow-lg transition-shadow">
+              <Card key={proposal.id} className="hover:shadow-lg transition-shadow cursor-pointer">
                 <CardHeader>
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
@@ -522,7 +471,7 @@ export function Governance() {
                 </div>
                 <div>
                   <div className="text-sm text-indigo-900">あなたの投票権</div>
-                  <div className="text-2xl text-indigo-700">{myVotingPower} トークン</div>
+                  <div className="text-2xl text-indigo-700">{votingPower.toFixed(1)} トークン</div>
                 </div>
               </div>
             </div>
@@ -545,7 +494,7 @@ export function Governance() {
             {/* Category */}
             <div>
               <Label htmlFor="category">カテゴリ *</Label>
-              <Select value={newProposal.category} onValueChange={(value) => setNewProposal({ ...newProposal, category: value })}>
+              <Select value={newProposal.category} onValueChange={(value: string) => setNewProposal({ ...newProposal, category: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="提案のカテゴリを選択" />
                 </SelectTrigger>
@@ -661,6 +610,72 @@ export function Governance() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Voting Power Info Dialog */}
+      <Dialog open={isVotingPowerInfoOpen} onOpenChange={setIsVotingPowerInfoOpen}>
+        <DialogContent className="max-w-2xl max-h-96 overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>投票権（DAOトークン）獲得方法</DialogTitle>
+            <DialogDescription>
+              研究貢献度に応じてDAO投票権が付与されます
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
+              <div className="text-sm font-semibold text-gray-900 mb-1">📄 論文公開</div>
+              <p className="text-xs text-gray-600 mb-2">1件あたり <span className="font-bold text-blue-600">10トークン</span></p>
+              <p className="text-xs text-gray-500">研究成果を公開するたびにDAOトークン獲得</p>
+            </div>
+            
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
+              <div className="text-sm font-semibold text-gray-900 mb-1">👍 いいね獲得</div>
+              <p className="text-xs text-gray-600 mb-2">1件あたり <span className="font-bold text-purple-600">0.1トークン</span></p>
+              <p className="text-xs text-gray-500">論文が評価されるとトークン加算</p>
+            </div>
+            
+            <div className="bg-gradient-to-br from-pink-50 to-pink-100 rounded-lg p-4 border border-pink-200">
+              <div className="text-sm font-semibold text-gray-900 mb-1">💬 コメント獲得</div>
+              <p className="text-xs text-gray-600 mb-2">1件あたり <span className="font-bold text-pink-600">0.2トークン</span></p>
+              <p className="text-xs text-gray-500">コメント受け取り時にトークン加算</p>
+            </div>
+            
+            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
+              <div className="text-sm font-semibold text-gray-900 mb-1">🎓 セミナー開催</div>
+              <p className="text-xs text-gray-600 mb-2">1件あたり <span className="font-bold text-green-600">25トークン</span></p>
+              <p className="text-xs text-gray-500">学術イベント主催でトークン獲得</p>
+            </div>
+            
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
+              <div className="text-sm font-semibold text-gray-900 mb-1">🤝 プロジェクト参加</div>
+              <p className="text-xs text-gray-600 mb-2">1件あたり <span className="font-bold text-orange-600">15トークン</span></p>
+              <p className="text-xs text-gray-500">共同研究プロジェクト参加でトークン獲得</p>
+            </div>
+            
+            <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg p-4 border border-indigo-200">
+              <div className="text-sm font-semibold text-gray-900 mb-1">🏆 最大値</div>
+              <p className="text-xs text-gray-600 mb-2">上限 <span className="font-bold text-indigo-600">5,000トークン</span></p>
+              <p className="text-xs text-gray-500">投票権は最大5,000トークンです</p>
+            </div>
+          </div>
+
+          <div className="mt-4 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+            <p className="text-xs text-indigo-900">
+              💡 <span className="font-semibold">ヒント:</span> 更多的研究活動（論文公開、セミナー開催など）を行うことで、投票権が増加し、DAO内での発言力が高まります。
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsVotingPowerInfoOpen(false)}
+            >
+              閉じる
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+

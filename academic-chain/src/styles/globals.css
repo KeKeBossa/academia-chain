@@ -187,3 +187,15 @@
 html {
   font-size: var(--font-size);
 }
+
+button {
+  cursor: pointer;
+}
+
+[role="button"] {
+  cursor: pointer;
+}
+
+[onclick] {
+  cursor: pointer;
+}
