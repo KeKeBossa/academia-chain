@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
 import { Edit, Mail, MapPin, GraduationCap, Award, FileText, Users, Briefcase, ExternalLink, Shield, Hash, X, Plus } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
@@ -21,7 +20,6 @@ import { UNIVERSITY_NAMES, getDepartmentsByUniversity } from '../data/universiti
 import { ACADEMIC_LEVELS } from '../data/academic-levels';
 
 export function Profile() {
-  const { t } = useTranslation();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
   // useUserProfile フックから状態を取得
