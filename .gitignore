@@ -36,3 +36,5 @@ tmp/
 
 # Vite build output
 academic-chain/build/
+.vercel
+.env*.local
